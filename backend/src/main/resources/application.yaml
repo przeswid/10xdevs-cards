@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: cards
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/tenx_cards
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+security:
+  jwt:
+    secret-key: 26db00246ac685a4d4365e5243f1da8a63d2965d273521d97bb46232f02ea40c
+    expiration-time: 36000000 # 1 hour
