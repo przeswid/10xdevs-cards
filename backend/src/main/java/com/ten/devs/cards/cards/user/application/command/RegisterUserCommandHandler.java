@@ -5,6 +5,7 @@ import com.ten.devs.cards.cards.user.domain.Role;
 import com.ten.devs.cards.cards.user.domain.User;
 import com.ten.devs.cards.cards.user.domain.UserId;
 import com.ten.devs.cards.cards.user.domain.UserRepository;
+import com.ten.devs.cards.cards.user.presentation.response.RegisterResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -13,14 +14,14 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-class RegisterUserCommandHandler implements Command.Handler<RegisterUserCommand, UserId> {
+class RegisterUserCommandHandler implements Command.Handler<RegisterUserCommand, RegisterResponse> {
 
     private final UserRepository userRepository;
 
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public UserId handle(RegisterUserCommand command) {
+    public RegisterResponse handle(RegisterUserCommand command) {
         User user = User.newUser(
                 UserId.random(),
                 command.username(),
@@ -32,6 +33,6 @@ class RegisterUserCommandHandler implements Command.Handler<RegisterUserCommand,
         );
 
         userRepository.save(user);
-        return user.toSnapshot().id();
+        return new RegisterResponse(user.toSnapshot().id().id());
     }
 }

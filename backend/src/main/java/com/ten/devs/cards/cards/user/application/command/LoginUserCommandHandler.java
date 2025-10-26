@@ -42,6 +42,6 @@ class LoginUserCommandHandler implements Command.Handler<LoginUserCommand, Login
         String jwtToken = jwtOperations.generateToken(userDetails);
 
         // 4. Return login response with token and expiration
-        return new LoginResponse(jwtToken, jwtOperations.getExpirationTime());
+        return new LoginResponse(command.username(), jwtToken, jwtOperations.getExpirationTime());
     }
 }

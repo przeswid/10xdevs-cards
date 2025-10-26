@@ -33,7 +33,7 @@ public class AuthenticationController {
                         .lastName(registerUserRequestDto.lastName())
                         .build());
 
-        return ResponseEntity.ok(registeredUserId.id());
+        return ResponseEntity.ok(registeredUserId.userId());
     }
 
     @PostMapping("/login")
