@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <!-- 
+    RELEASE 1.0 - 10x-cards MVP Complete Database Schema Refactor
+    =============================================================
+    
+    This changelog replaces the monolithic 001_init_schema.sql with a modular,
+    maintainable structure that includes the complete MVP requirements.
+    
+    EXECUTION ORDER (Dependency-Based):
+    1. Core tables (users) - no dependencies
+    2. User-dependent tables (user_roles, ai_generation_sessions)
+    3. Multi-dependency tables (flashcards)
+    4. Performance indexes
+    5. Referential integrity constraints
+    6. Security policies (RLS)
+    7. Initial/seed data
+    
+    DEPENDENCY GRAPH:
+    users (core)
+    ├── user_roles (1:N)
+    ├── ai_generation_sessions (1:N)
+    └── flashcards (1:N)
+        └── ai_generation_sessions (N:1, optional)
+    
+    CONTEXTS:
+    - core: Essential tables and constraints
+    - performance: Indexes and optimizations
+    - security: RLS policies and security constraints
+    - data: Initial/seed data
+    -->
+
+    <!-- Phase 1: Core Tables (No Dependencies) -->
+    <include file="db/changelog/liquibase/changelogs/releases/1.0/tables/001-create-table-users.xml"/>
+    
+    <!-- Phase 2: User-Dependent Tables -->
+    <include file="db/changelog/liquibase/changelogs/releases/1.0/tables/002-create-table-user-roles.xml"/>
+    <include file="db/changelog/liquibase/changelogs/releases/1.0/tables/003-create-table-ai-generation-sessions.xml"/>
+    
+    <!-- Phase 3: Multi-Dependency Tables -->
+    <include file="db/changelog/liquibase/changelogs/releases/1.0/tables/004-create-table-flashcards.xml"/>
+    
+    <!-- Phase 4: Performance Optimization -->
+    <include file="db/changelog/liquibase/changelogs/releases/1.0/indexes/001-create-indexes-users.xml"/>
+    <include file="db/changelog/liquibase/changelogs/releases/1.0/indexes/002-create-indexes-user-roles.xml"/>
+    <include file="db/changelog/liquibase/changelogs/releases/1.0/indexes/003-create-indexes-ai-generation-sessions.xml"/>
+    <include file="db/changelog/liquibase/changelogs/releases/1.0/indexes/004-create-indexes-flashcards.xml"/>
+    
+    <!-- Phase 5: Referential Integrity -->
+    <include file="db/changelog/liquibase/changelogs/releases/1.0/constraints/001-create-foreign-keys.xml"/>
+    
+    <!-- Phase 6: Security Policies -->
+    <include file="db/changelog/liquibase/changelogs/releases/1.0/constraints/002-create-rls-policies.xml"/>
+    
+    <!-- Phase 7: Initial Data (Future) -->
+    <!-- <include file="db/changelog/liquibase/changelogs/releases/1.0/data/001-seed-data.xml"/> -->
+
+</databaseChangeLog>

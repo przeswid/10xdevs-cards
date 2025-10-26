@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <!-- 
+    USERS TABLE INDEXES
+    ===================
+    
+    PURPOSE: Performance optimization for user authentication and lookup operations
+    BUSINESS CONTEXT: Fast user authentication, profile queries, and administrative operations
+    
+    QUERY PATTERNS:
+    - Login by username (most frequent)
+    - Login by email (alternative authentication)
+    - Account status filtering (admin operations)
+    - Timestamp range queries (audit, analytics)
+    -->
+
+    <changeSet id="create-indexes-users-authentication" author="migration-team" context="performance">
+        <preConditions onFail="HALT">
+            <tableExists tableName="users"/>
+        </preConditions>
+        
+        <comment>Create authentication indexes on users table for login performance</comment>
+
+        <!-- Username index for primary authentication method -->
+        <createIndex tableName="users" indexName="idx_users_username" unique="false">
+            <column name="username"/>
+        </createIndex>
+        
+        <!-- Email index for alternative authentication method -->
+        <createIndex tableName="users" indexName="idx_users_email" unique="false">
+            <column name="email"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex tableName="users" indexName="idx_users_username"/>
+            <dropIndex tableName="users" indexName="idx_users_email"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="create-indexes-users-administration" author="migration-team" context="performance">
+        <preConditions onFail="HALT">
+            <tableExists tableName="users"/>
+        </preConditions>
+        
+        <comment>Create administrative indexes on users table for account management</comment>
+
+        <!-- Account status index for administrative filtering -->
+        <createIndex tableName="users" indexName="idx_users_account_status" unique="false">
+            <column name="account_status"/>
+        </createIndex>
+
+        <!-- Created timestamp index for user registration analytics -->
+        <createIndex tableName="users" indexName="idx_users_created_at" unique="false">
+            <column name="created_at" descending="true"/>
+        </createIndex>
+
+        <!-- Last login index for activity monitoring -->
+        <createIndex tableName="users" indexName="idx_users_last_login_at" unique="false">
+            <column name="last_login_at" descending="true"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex tableName="users" indexName="idx_users_account_status"/>
+            <dropIndex tableName="users" indexName="idx_users_created_at"/>
+            <dropIndex tableName="users" indexName="idx_users_last_login_at"/>
+        </rollback>
+    </changeSet>
+
+    <!-- 
+    PERFORMANCE CONSIDERATIONS:
+    1. Username/email indexes support O(log n) authentication lookups
+    2. Account status index enables fast filtering of active/inactive users
+    3. Timestamp indexes support range queries for analytics
+    4. Descending order on timestamps optimizes "most recent" queries
+    
+    QUERY OPTIMIZATION:
+    - SELECT * FROM users WHERE username = ? (uses idx_users_username)
+    - SELECT * FROM users WHERE email = ? (uses idx_users_email)
+    - SELECT * FROM users WHERE account_status = 'ACTIVE' (uses idx_users_account_status)
+    - SELECT * FROM users WHERE created_at > ? ORDER BY created_at DESC (uses idx_users_created_at)
+    -->
+
+</databaseChangeLog>

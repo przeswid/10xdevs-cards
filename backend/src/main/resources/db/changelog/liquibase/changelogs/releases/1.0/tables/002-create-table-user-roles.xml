@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <!-- 
+    USER_ROLES TABLE CREATION
+    =========================
+    
+    PURPOSE: Role-based access control for application security
+    BUSINESS CONTEXT: Support multiple roles per user for flexible permission management
+    
+    DESIGN DECISIONS:
+    - Composite primary key (user_id, role) allows multiple roles per user
+    - CHECK constraint ensures only valid role types
+    - CASCADE DELETE for GDPR compliance (delete user = delete all roles)
+    
+    DEPENDENCIES: users table (foreign key reference)
+    -->
+
+    <changeSet id="create-table-user-roles" author="migration-team" context="core">
+        <preConditions onFail="HALT">
+            <tableExists tableName="users"/>
+        </preConditions>
+        
+        <comment>Create user_roles table for role-based access control</comment>
+
+        <createTable tableName="user_roles" remarks="Role assignments for users - supports multiple roles per user">
+            <column name="user_id" type="UUID" remarks="Foreign key to users table">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="role" type="VARCHAR(20)" remarks="Role name: USER, ADMIN">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Create composite primary key -->
+        <addPrimaryKey 
+            tableName="user_roles" 
+            columnNames="user_id,role" 
+            constraintName="pk_user_roles"/>
+
+        <rollback>
+            <dropTable tableName="user_roles"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="add-check-constraint-user-roles-role" author="migration-team" context="core">
+        <preConditions onFail="HALT">
+            <tableExists tableName="user_roles"/>
+            <columnExists tableName="user_roles" columnName="role"/>
+        </preConditions>
+        
+        <comment>Add CHECK constraint for user_roles role field validation</comment>
+
+        <sql>
+            ALTER TABLE user_roles ADD CONSTRAINT ck_user_roles_role_valid 
+            CHECK (role IN ('USER', 'ADMIN'));
+        </sql>
+
+        <rollback>
+            <sql>ALTER TABLE user_roles DROP CONSTRAINT IF EXISTS ck_user_roles_role_valid;</sql>
+        </rollback>
+    </changeSet>
+
+    <!-- 
+    BUSINESS RULES:
+    1. Each user can have multiple roles (e.g., USER and ADMIN)
+    2. Only predefined roles are allowed (USER, ADMIN)
+    3. No duplicate role assignments per user (enforced by PK)
+    4. Role deletion when user is deleted (CASCADE)
+    
+    SECURITY CONSIDERATIONS:
+    - Role validation prevents privilege escalation
+    - Composite key prevents duplicate role assignments
+    - Foreign key ensures referential integrity
+    -->
+
+</databaseChangeLog>

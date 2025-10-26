@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <!-- 
+    USER_ROLES TABLE INDEXES
+    ========================
+    
+    PURPOSE: Performance optimization for role-based authorization and administration
+    BUSINESS CONTEXT: Fast role lookup for security context and administrative operations
+    
+    QUERY PATTERNS:
+    - Role lookup by user (authorization - most frequent)
+    - User lookup by role (administration)
+    - Role distribution analysis
+    -->
+
+    <changeSet id="create-indexes-user-roles" author="migration-team" context="performance">
+        <preConditions onFail="HALT">
+            <tableExists tableName="user_roles"/>
+        </preConditions>
+        
+        <comment>Create indexes on user_roles table for authorization performance</comment>
+
+        <!-- User ID index for role lookup during authorization -->
+        <createIndex tableName="user_roles" indexName="idx_user_roles_user_id" unique="false">
+            <column name="user_id"/>
+        </createIndex>
+
+        <!-- Role index for administrative queries (find all users with role X) -->
+        <createIndex tableName="user_roles" indexName="idx_user_roles_role" unique="false">
+            <column name="role"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex tableName="user_roles" indexName="idx_user_roles_user_id"/>
+            <dropIndex tableName="user_roles" indexName="idx_user_roles_role"/>
+        </rollback>
+    </changeSet>
+
+    <!-- 
+    PERFORMANCE CONSIDERATIONS:
+    1. user_id index supports O(log n) role lookup for authorization
+    2. role index enables efficient "find all users with role X" queries
+    3. Composite primary key (user_id, role) already provides optimal lookup for specific user+role combinations
+    
+    QUERY OPTIMIZATION:
+    - SELECT role FROM user_roles WHERE user_id = ? (uses idx_user_roles_user_id)
+    - SELECT user_id FROM user_roles WHERE role = 'ADMIN' (uses idx_user_roles_role)
+    - SELECT * FROM user_roles WHERE user_id = ? AND role = ? (uses primary key)
+    
+    NOTE: 
+    The composite primary key already provides efficient lookup for exact user+role matches.
+    These additional indexes optimize partial key lookups which are common in authorization scenarios.
+    -->
+
+</databaseChangeLog>

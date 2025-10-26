@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <!-- 
+    AI_GENERATION_SESSIONS TABLE INDEXES
+    =====================================
+    
+    PURPOSE: Performance optimization for AI session queries, analytics, and cost tracking
+    BUSINESS CONTEXT: Fast retrieval of user's AI history, cost analysis, and generation analytics
+    
+    QUERY PATTERNS:
+    - User's session history (most frequent)
+    - Status filtering (PENDING sessions for processing)
+    - Cost analysis by model and time period
+    - Generation analytics and success rates
+    -->
+
+    <changeSet id="create-indexes-ai-sessions-user-queries" author="migration-team" context="performance">
+        <preConditions onFail="HALT">
+            <tableExists tableName="ai_generation_sessions"/>
+        </preConditions>
+        
+        <comment>Create user-focused indexes on ai_generation_sessions for session history</comment>
+
+        <!-- User ID index for user's session history -->
+        <createIndex tableName="ai_generation_sessions" indexName="idx_ai_sessions_user_id" unique="false">
+            <column name="user_id"/>
+        </createIndex>
+
+        <!-- Composite index for user's sessions ordered by creation time -->
+        <createIndex tableName="ai_generation_sessions" indexName="idx_ai_sessions_user_created" unique="false">
+            <column name="user_id"/>
+            <column name="created_at" descending="true"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex tableName="ai_generation_sessions" indexName="idx_ai_sessions_user_id"/>
+            <dropIndex tableName="ai_generation_sessions" indexName="idx_ai_sessions_user_created"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="create-indexes-ai-sessions-status-monitoring" author="migration-team" context="performance">
+        <preConditions onFail="HALT">
+            <tableExists tableName="ai_generation_sessions"/>
+        </preConditions>
+        
+        <comment>Create status and monitoring indexes on ai_generation_sessions</comment>
+
+        <!-- Status index for processing workflow (find PENDING sessions) -->
+        <createIndex tableName="ai_generation_sessions" indexName="idx_ai_sessions_status" unique="false">
+            <column name="status"/>
+        </createIndex>
+
+        <!-- Created timestamp index for temporal analytics -->
+        <createIndex tableName="ai_generation_sessions" indexName="idx_ai_sessions_created_at" unique="false">
+            <column name="created_at" descending="true"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex tableName="ai_generation_sessions" indexName="idx_ai_sessions_status"/>
+            <dropIndex tableName="ai_generation_sessions" indexName="idx_ai_sessions_created_at"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="create-indexes-ai-sessions-analytics" author="migration-team" context="performance">
+        <preConditions onFail="HALT">
+            <tableExists tableName="ai_generation_sessions"/>
+        </preConditions>
+        
+        <comment>Create analytics indexes on ai_generation_sessions for cost and model analysis</comment>
+
+        <!-- AI model index for model performance analysis -->
+        <createIndex tableName="ai_generation_sessions" indexName="idx_ai_sessions_ai_model" unique="false">
+            <column name="ai_model"/>
+        </createIndex>
+
+        <!-- Composite index for cost analysis by model and time -->
+        <createIndex tableName="ai_generation_sessions" indexName="idx_ai_sessions_model_cost_time" unique="false">
+            <column name="ai_model"/>
+            <column name="created_at" descending="true"/>
+            <column name="api_cost"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex tableName="ai_generation_sessions" indexName="idx_ai_sessions_ai_model"/>
+            <dropIndex tableName="ai_generation_sessions" indexName="idx_ai_sessions_model_cost_time"/>
+        </rollback>
+    </changeSet>
+
+    <!-- 
+    PERFORMANCE CONSIDERATIONS:
+    1. User-focused indexes optimize personal session history queries
+    2. Status index enables efficient processing workflow queries
+    3. Temporal indexes support time-range analytics
+    4. Model indexes enable cost and performance analysis across AI providers
+    
+    QUERY OPTIMIZATION:
+    - SELECT * FROM ai_generation_sessions WHERE user_id = ? ORDER BY created_at DESC (uses idx_ai_sessions_user_created)
+    - SELECT * FROM ai_generation_sessions WHERE status = 'PENDING' (uses idx_ai_sessions_status)
+    - SELECT AVG(api_cost) FROM ai_generation_sessions WHERE ai_model = ? AND created_at > ? (uses idx_ai_sessions_model_cost_time)
+    - SELECT COUNT(*), SUM(api_cost) FROM ai_generation_sessions WHERE created_at BETWEEN ? AND ? (uses idx_ai_sessions_created_at)
+    
+    ANALYTICS USE CASES:
+    - Daily/monthly generation volume and costs
+    - Model performance comparison (acceptance rates, costs)
+    - User engagement patterns
+    - Processing queue management (PENDING sessions)
+    -->
+
+</databaseChangeLog>

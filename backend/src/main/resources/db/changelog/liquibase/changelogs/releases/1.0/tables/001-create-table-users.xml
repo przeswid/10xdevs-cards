@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <!-- 
+    USERS TABLE CREATION
+    ====================
+    
+    PURPOSE: Core user entity with authentication and audit capabilities
+    BUSINESS CONTEXT: Central entity for all user-related operations in flashcard application
+    
+    DESIGN DECISIONS:
+    - UUID primary key for better distribution and security
+    - Email limited to RFC 5321 standard (254 chars)
+    - Password field sized for BCrypt hashes (255 chars)
+    - Audit timestamps for GDPR compliance and troubleshooting
+    - Account status for user lifecycle management
+    
+    DEPENDENCIES: None (core table)
+    -->
+
+    <changeSet id="create-table-users" author="migration-team" context="core">
+        <comment>Create users table - core entity for authentication and user management</comment>
+        
+        <createTable tableName="users" remarks="Core user entity with authentication and audit data">
+            <column name="id" type="UUID" remarks="Primary key - UUID for security and distribution">
+                <constraints primaryKey="true" primaryKeyName="pk_users"/>
+            </column>
+            
+            <column name="username" type="VARCHAR(50)" remarks="Unique username for authentication">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uq_users_username"/>
+            </column>
+            
+            <column name="password" type="VARCHAR(255)" remarks="BCrypt hashed password">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="email" type="VARCHAR(254)" remarks="User email address (RFC 5321 compliant)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uq_users_email"/>
+            </column>
+            
+            <column name="first_name" type="VARCHAR(100)" remarks="User first name"/>
+            
+            <column name="last_name" type="VARCHAR(100)" remarks="User last name"/>
+            
+            <column name="account_status" type="VARCHAR(20)" 
+                    remarks="Account status: ACTIVE, INACTIVE, SUSPENDED" 
+                    defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="last_login_at" type="TIMESTAMP WITH TIME ZONE" 
+                    remarks="Last successful login timestamp"/>
+            
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" 
+                    remarks="Account creation timestamp" 
+                    defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" 
+                    remarks="Last account update timestamp" 
+                    defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <rollback>
+            <dropTable tableName="users"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="add-check-constraint-users-account-status" author="migration-team" context="core">
+        <preConditions onFail="HALT">
+            <tableExists tableName="users"/>
+            <columnExists tableName="users" columnName="account_status"/>
+        </preConditions>
+        
+        <comment>Add CHECK constraint for users account_status field validation</comment>
+
+        <sql>
+            ALTER TABLE users ADD CONSTRAINT ck_users_account_status_valid 
+            CHECK (account_status IN ('ACTIVE', 'INACTIVE', 'SUSPENDED'));
+        </sql>
+
+        <rollback>
+            <sql>ALTER TABLE users DROP CONSTRAINT IF EXISTS ck_users_account_status_valid;</sql>
+        </rollback>
+    </changeSet>
+
+    <!-- 
+    BUSINESS RULES:
+    1. Username must be unique across the system
+    2. Email must be unique and valid format (enforced at application level)
+    3. Password is always stored as BCrypt hash
+    4. Account status controls user access
+    5. Timestamps enable audit trails and GDPR compliance
+    
+    SECURITY CONSIDERATIONS:
+    - UUID prevents user enumeration attacks
+    - No sensitive data stored in plaintext
+    - Account status enables soft account disabling
+    -->
+
+</databaseChangeLog>

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <!-- 
+    FOREIGN KEY CONSTRAINTS
+    =======================
+    
+    PURPOSE: Ensure referential integrity across all tables and enable GDPR compliance
+    BUSINESS CONTEXT: Maintain data consistency and implement cascade operations for data protection
+    
+    CASCADE STRATEGY:
+    - DELETE CASCADE: For GDPR compliance (user deletion removes all associated data)
+    - UPDATE RESTRICT: Prevent accidental ID changes that could break references
+    - SET NULL: For optional relationships where parent deletion doesn't require child deletion
+    
+    DEPENDENCY ORDER:
+    1. users (parent table)
+    2. user_roles → users
+    3. ai_generation_sessions → users  
+    4. flashcards → users, ai_generation_sessions
+    -->
+
+    <changeSet id="create-fk-user-roles-to-users" author="migration-team" context="core">
+        <preConditions onFail="HALT">
+            <tableExists tableName="users"/>
+            <tableExists tableName="user_roles"/>
+            <columnExists tableName="user_roles" columnName="user_id"/>
+        </preConditions>
+        
+        <comment>Create foreign key from user_roles to users with CASCADE DELETE for GDPR compliance</comment>
+
+        <addForeignKeyConstraint 
+            baseTableName="user_roles" 
+            baseColumnNames="user_id"
+            referencedTableName="users" 
+            referencedColumnNames="id"
+            constraintName="fk_user_roles_user_id"
+            onDelete="CASCADE"
+            onUpdate="RESTRICT"/>
+
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="user_roles" constraintName="fk_user_roles_user_id"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="create-fk-ai-sessions-to-users" author="migration-team" context="core">
+        <preConditions onFail="HALT">
+            <tableExists tableName="users"/>
+            <tableExists tableName="ai_generation_sessions"/>
+            <columnExists tableName="ai_generation_sessions" columnName="user_id"/>
+        </preConditions>
+        
+        <comment>Create foreign key from ai_generation_sessions to users with CASCADE DELETE</comment>
+
+        <addForeignKeyConstraint 
+            baseTableName="ai_generation_sessions" 
+            baseColumnNames="user_id"
+            referencedTableName="users" 
+            referencedColumnNames="id"
+            constraintName="fk_ai_sessions_user_id"
+            onDelete="CASCADE"
+            onUpdate="RESTRICT"/>
+
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="ai_generation_sessions" constraintName="fk_ai_sessions_user_id"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="create-fk-flashcards-to-users" author="migration-team" context="core">
+        <preConditions onFail="HALT">
+            <tableExists tableName="users"/>
+            <tableExists tableName="flashcards"/>
+            <columnExists tableName="flashcards" columnName="user_id"/>
+        </preConditions>
+        
+        <comment>Create foreign key from flashcards to users with CASCADE DELETE</comment>
+
+        <addForeignKeyConstraint 
+            baseTableName="flashcards" 
+            baseColumnNames="user_id"
+            referencedTableName="users" 
+            referencedColumnNames="id"
+            constraintName="fk_flashcards_user_id"
+            onDelete="CASCADE"
+            onUpdate="RESTRICT"/>
+
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="flashcards" constraintName="fk_flashcards_user_id"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="create-fk-flashcards-to-ai-sessions" author="migration-team" context="core">
+        <preConditions onFail="HALT">
+            <tableExists tableName="ai_generation_sessions"/>
+            <tableExists tableName="flashcards"/>
+            <columnExists tableName="flashcards" columnName="generation_session_id"/>
+        </preConditions>
+        
+        <comment>Create optional foreign key from flashcards to ai_generation_sessions with SET NULL</comment>
+
+        <addForeignKeyConstraint 
+            baseTableName="flashcards" 
+            baseColumnNames="generation_session_id"
+            referencedTableName="ai_generation_sessions" 
+            referencedColumnNames="id"
+            constraintName="fk_flashcards_generation_session_id"
+            onDelete="SET NULL"
+            onUpdate="RESTRICT"/>
+
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="flashcards" constraintName="fk_flashcards_generation_session_id"/>
+        </rollback>
+    </changeSet>
+
+    <!-- 
+    REFERENTIAL INTEGRITY RULES:
+    
+    1. USER DELETION (GDPR "Right to be Forgotten"):
+       - DELETE users WHERE id = X
+       - Automatically deletes all user_roles for user X (CASCADE)
+       - Automatically deletes all ai_generation_sessions for user X (CASCADE)
+       - Automatically deletes all flashcards for user X (CASCADE)
+       - Result: Complete data removal as required by GDPR
+    
+    2. AI SESSION DELETION:
+       - DELETE ai_generation_sessions WHERE id = Y
+       - Sets generation_session_id = NULL for all flashcards linked to session Y (SET NULL)
+       - Flashcards remain but lose link to generation session
+       - Preserves user's flashcards even if AI session data is purged
+    
+    3. UPDATE RESTRICTIONS:
+       - Cannot change user.id if user_roles, ai_sessions, or flashcards reference it
+       - Cannot change ai_generation_sessions.id if flashcards reference it
+       - Prevents accidental breaking of relationships
+    
+    BUSINESS IMPACT:
+    - GDPR compliance through complete cascade deletion
+    - Data preservation when AI sessions are cleaned up
+    - Protection against accidental relationship breaking
+    - Clear data ownership and lifecycle management
+    -->
+
+</databaseChangeLog>

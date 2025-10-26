@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <!-- 
+    FLASHCARDS TABLE CREATION
+    =========================
+    
+    PURPOSE: Core entity for storing user flashcards with source tracking and content
+    BUSINESS CONTEXT: Central entity for spaced repetition learning with AI generation analytics
+    
+    DESIGN DECISIONS:
+    - UUID primary key for security and distribution
+    - Content limited to 1000 chars per side (reasonable for flashcards)
+    - Source tracking for AI analytics (AI, AI_USER, USER)
+    - Optional link to AI generation session
+    - Audit timestamps for user activity tracking
+    
+    DEPENDENCIES: 
+    - users table (mandatory foreign key)
+    - ai_generation_sessions table (optional foreign key)
+    -->
+
+    <changeSet id="create-table-flashcards" author="migration-team" context="core">
+        <preConditions onFail="HALT">
+            <tableExists tableName="users"/>
+            <tableExists tableName="ai_generation_sessions"/>
+        </preConditions>
+        
+        <comment>Create flashcards table - core entity for user study materials with source tracking</comment>
+
+        <createTable tableName="flashcards" 
+                     remarks="User flashcards for spaced repetition learning with source tracking">
+            <column name="id" type="UUID" remarks="Primary key - unique flashcard identifier">
+                <constraints primaryKey="true" primaryKeyName="pk_flashcards"/>
+            </column>
+            
+            <column name="user_id" type="UUID" remarks="Foreign key to users table - flashcard owner">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="front_content" type="VARCHAR(1000)" 
+                    remarks="Question or prompt side of flashcard (max 1000 chars)">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="back_content" type="VARCHAR(1000)" 
+                    remarks="Answer or explanation side of flashcard (max 1000 chars)">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="source" type="VARCHAR(20)" 
+                    remarks="Flashcard origin: AI (generated), AI_USER (AI then modified), USER (manual)">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="generation_session_id" type="UUID" 
+                    remarks="Optional foreign key to ai_generation_sessions for AI-generated cards"/>
+            
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" 
+                    remarks="Flashcard creation timestamp" 
+                    defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE" 
+                    remarks="Last modification timestamp" 
+                    defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <rollback>
+            <dropTable tableName="flashcards"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="add-check-constraints-flashcards" author="migration-team" context="core">
+        <preConditions onFail="HALT">
+            <tableExists tableName="flashcards"/>
+        </preConditions>
+        
+        <comment>Add CHECK constraints for flashcards data validation</comment>
+
+        <sql>
+            <![CDATA[
+            ALTER TABLE flashcards ADD CONSTRAINT ck_flashcards_source_valid 
+            CHECK (source IN ('AI', 'AI_USER', 'USER'));
+            
+            ALTER TABLE flashcards ADD CONSTRAINT ck_flashcards_front_content_not_empty 
+            CHECK (LENGTH(TRIM(front_content)) > 0);
+            
+            ALTER TABLE flashcards ADD CONSTRAINT ck_flashcards_back_content_not_empty 
+            CHECK (LENGTH(TRIM(back_content)) > 0);
+            ]]>
+        </sql>
+
+        <rollback>
+            <sql>
+                <![CDATA[
+                ALTER TABLE flashcards DROP CONSTRAINT IF EXISTS ck_flashcards_source_valid;
+                ALTER TABLE flashcards DROP CONSTRAINT IF EXISTS ck_flashcards_front_content_not_empty;
+                ALTER TABLE flashcards DROP CONSTRAINT IF EXISTS ck_flashcards_back_content_not_empty;
+                ]]>
+            </sql>
+        </rollback>
+    </changeSet>
+
+    <!-- 
+    BUSINESS RULES:
+    1. Front and back content cannot be empty or whitespace-only
+    2. Source must be one of: AI, AI_USER, USER
+    3. AI-generated cards (source = 'AI') must have generation_session_id
+    4. User-created cards (source = 'USER') should not have generation_session_id
+    5. Modified AI cards (source = 'AI_USER') may or may not have generation_session_id
+    
+    SOURCE TRACKING ANALYTICS:
+    - 'AI': Generated by AI and accepted without modification
+    - 'AI_USER': Generated by AI but modified by user before acceptance
+    - 'USER': Manually created by user from scratch
+    
+    This enables measurement of:
+    - AI generation success rate
+    - User modification patterns
+    - Balance between AI and manual content creation
+    -->
+
+</databaseChangeLog>

@@ -18,7 +18,8 @@ spring:
         format_sql: true
 
   liquibase:
-    change-log: classpath:db/changelog/db.changelog-master.yaml
+    change-log: classpath:db/changelog/liquibase/changelog-master.xml
+    contexts: core,performance,security
 
 security:
   jwt:

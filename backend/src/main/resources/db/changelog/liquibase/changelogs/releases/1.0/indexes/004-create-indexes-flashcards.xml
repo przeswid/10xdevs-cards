@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <!-- 
+    FLASHCARDS TABLE INDEXES
+    ========================
+    
+    PURPOSE: Performance optimization for flashcard queries, study sessions, and analytics
+    BUSINESS CONTEXT: Fast retrieval for study sessions, user flashcard management, and AI analytics
+    
+    QUERY PATTERNS:
+    - User's flashcard collection (most frequent - study sessions)
+    - Source-based analytics (AI vs manual creation)
+    - Temporal queries (recently created/updated)
+    - AI session linkage for analytics
+    -->
+
+    <changeSet id="create-indexes-flashcards-user-queries" author="migration-team" context="performance">
+        <preConditions onFail="HALT">
+            <tableExists tableName="flashcards"/>
+        </preConditions>
+        
+        <comment>Create user-focused indexes on flashcards for study sessions and management</comment>
+
+        <!-- User ID index for user's flashcard collection -->
+        <createIndex tableName="flashcards" indexName="idx_flashcards_user_id" unique="false">
+            <column name="user_id"/>
+        </createIndex>
+
+        <!-- Composite index for user's flashcards ordered by creation (most recent first) -->
+        <createIndex tableName="flashcards" indexName="idx_flashcards_user_created" unique="false">
+            <column name="user_id"/>
+            <column name="created_at" descending="true"/>
+        </createIndex>
+
+        <!-- Composite index for user's flashcards ordered by last update (recently modified first) -->
+        <createIndex tableName="flashcards" indexName="idx_flashcards_user_updated" unique="false">
+            <column name="user_id"/>
+            <column name="updated_at" descending="true"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex tableName="flashcards" indexName="idx_flashcards_user_id"/>
+            <dropIndex tableName="flashcards" indexName="idx_flashcards_user_created"/>
+            <dropIndex tableName="flashcards" indexName="idx_flashcards_user_updated"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="create-indexes-flashcards-analytics" author="migration-team" context="performance">
+        <preConditions onFail="HALT">
+            <tableExists tableName="flashcards"/>
+        </preConditions>
+        
+        <comment>Create analytics indexes on flashcards for source tracking and AI analysis</comment>
+
+        <!-- Source index for AI vs manual creation analytics -->
+        <createIndex tableName="flashcards" indexName="idx_flashcards_source" unique="false">
+            <column name="source"/>
+        </createIndex>
+
+        <!-- Composite index for user's flashcards by source -->
+        <createIndex tableName="flashcards" indexName="idx_flashcards_user_source" unique="false">
+            <column name="user_id"/>
+            <column name="source"/>
+        </createIndex>
+
+        <!-- Generation session index for AI analytics -->
+        <createIndex tableName="flashcards" indexName="idx_flashcards_generation_session_id" unique="false">
+            <column name="generation_session_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex tableName="flashcards" indexName="idx_flashcards_source"/>
+            <dropIndex tableName="flashcards" indexName="idx_flashcards_user_source"/>
+            <dropIndex tableName="flashcards" indexName="idx_flashcards_generation_session_id"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="create-indexes-flashcards-temporal" author="migration-team" context="performance">
+        <preConditions onFail="HALT">
+            <tableExists tableName="flashcards"/>
+        </preConditions>
+        
+        <comment>Create temporal indexes on flashcards for time-based analytics</comment>
+
+        <!-- Created timestamp index for creation analytics -->
+        <createIndex tableName="flashcards" indexName="idx_flashcards_created_at" unique="false">
+            <column name="created_at" descending="true"/>
+        </createIndex>
+
+        <!-- Updated timestamp index for activity monitoring -->
+        <createIndex tableName="flashcards" indexName="idx_flashcards_updated_at" unique="false">
+            <column name="updated_at" descending="true"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex tableName="flashcards" indexName="idx_flashcards_created_at"/>
+            <dropIndex tableName="flashcards" indexName="idx_flashcards_updated_at"/>
+        </rollback>
+    </changeSet>
+
+    <!-- 
+    PERFORMANCE CONSIDERATIONS:
+    1. User-focused indexes optimize personal flashcard queries (study sessions)
+    2. Source indexes enable AI effectiveness analytics
+    3. Temporal indexes support activity monitoring and engagement analysis
+    4. Generation session linkage enables detailed AI analytics
+    
+    QUERY OPTIMIZATION:
+    - SELECT * FROM flashcards WHERE user_id = ? ORDER BY created_at DESC (uses idx_flashcards_user_created)
+    - SELECT * FROM flashcards WHERE user_id = ? ORDER BY updated_at DESC (uses idx_flashcards_user_updated)
+    - SELECT COUNT(*) FROM flashcards WHERE user_id = ? AND source = 'AI' (uses idx_flashcards_user_source)
+    - SELECT * FROM flashcards WHERE generation_session_id = ? (uses idx_flashcards_generation_session_id)
+    - SELECT COUNT(*) FROM flashcards WHERE source = 'USER' AND created_at > ? (uses idx_flashcards_source + idx_flashcards_created_at)
+    
+    STUDY SESSION OPTIMIZATION:
+    - Retrieving user's complete flashcard deck
+    - Filtering by creation/modification date
+    - Spaced repetition algorithm queries (future enhancement)
+    
+    ANALYTICS USE CASES:
+    - AI vs manual flashcard creation ratios
+    - User engagement patterns (creation/editing frequency)
+    - AI generation session effectiveness
+    - Temporal trends in flashcard creation
+    -->
+
+</databaseChangeLog>

@@ -8,10 +8,7 @@ import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Table(name = "users")
@@ -19,7 +16,7 @@ import java.util.Set;
 class UserEntity implements UserDetails {
 
     @Id
-    private String id;
+    private UUID id;
 
     @NotBlank
     @Size(max = 50)

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:pro="http://www.liquibase.org/xml/ns/pro"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd
+        http://www.liquibase.org/xml/ns/pro
+        http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.1.xsd">
+
+    <!-- 
+    LIQUIBASE MASTER CHANGELOG - 10x-cards MVP
+    ===========================================
+    
+    This is the main entry point for all database changes.
+    
+    REFACTORING STRATEGY:
+    - Complete replacement of 001_init_schema.sql with XML-based modular structure
+    - All existing data will be lost (acceptable as we're not in production)
+    - New schema includes full MVP requirements from database planning session
+    
+    VERSION: 1.0 - Complete MVP Schema Refactor
+    AUTHOR: migration-team
+    -->
+
+    <!-- Release 1.0 - Complete MVP Schema -->
+    <include file="db/changelog/liquibase/changelogs/releases/1.0/changelog-1.0-refactored.xml"/>
+
+</databaseChangeLog>

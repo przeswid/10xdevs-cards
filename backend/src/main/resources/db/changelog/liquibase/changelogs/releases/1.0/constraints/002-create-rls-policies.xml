@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <!-- 
+    ROW LEVEL SECURITY (RLS) POLICIES
+    ==================================
+    
+    PURPOSE: Implement database-level data isolation between users
+    BUSINESS CONTEXT: Ensure users can only access their own data, supporting privacy and GDPR compliance
+    
+    SECURITY MODEL:
+    - Each user can only see/modify records they own
+    - RLS policies use app.current_user_id session variable set by application
+    - Policies are permissive (allow access) rather than restrictive
+    - Users table exempt from RLS (needed for authentication)
+    
+    APPLICATION INTEGRATION:
+    - Spring Boot must set session variable: SET app.current_user_id = '<user_uuid>'
+    - Variable should be set per request in security filter
+    - Variable should be cleared after request completion
+    -->
+
+    <changeSet id="enable-rls-user-roles" author="migration-team" context="security">
+        <preConditions onFail="HALT">
+            <tableExists tableName="user_roles"/>
+        </preConditions>
+        
+        <comment>Enable Row Level Security on user_roles table</comment>
+
+        <sql>ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;</sql>
+
+        <rollback>
+            <sql>ALTER TABLE user_roles DISABLE ROW LEVEL SECURITY;</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="create-rls-policy-user-roles" author="migration-team" context="security">
+        <preConditions onFail="HALT">
+            <tableExists tableName="user_roles"/>
+        </preConditions>
+        
+        <comment>Create RLS policy for user_roles - users can only access their own roles</comment>
+
+        <sql>
+            CREATE POLICY user_roles_user_policy ON user_roles
+            FOR ALL
+            TO PUBLIC
+            USING (user_id = COALESCE(current_setting('app.current_user_id', true), '')::UUID);
+        </sql>
+
+        <rollback>
+            <sql>DROP POLICY IF EXISTS user_roles_user_policy ON user_roles;</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="enable-rls-ai-generation-sessions" author="migration-team" context="security">
+        <preConditions onFail="HALT">
+            <tableExists tableName="ai_generation_sessions"/>
+        </preConditions>
+        
+        <comment>Enable Row Level Security on ai_generation_sessions table</comment>
+
+        <sql>ALTER TABLE ai_generation_sessions ENABLE ROW LEVEL SECURITY;</sql>
+
+        <rollback>
+            <sql>ALTER TABLE ai_generation_sessions DISABLE ROW LEVEL SECURITY;</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="create-rls-policy-ai-sessions" author="migration-team" context="security">
+        <preConditions onFail="HALT">
+            <tableExists tableName="ai_generation_sessions"/>
+        </preConditions>
+        
+        <comment>Create RLS policy for AI sessions - users can only access their own sessions</comment>
+
+        <sql>
+            CREATE POLICY ai_sessions_user_policy ON ai_generation_sessions
+            FOR ALL
+            TO PUBLIC
+            USING (user_id = COALESCE(current_setting('app.current_user_id', true), '')::UUID);
+        </sql>
+
+        <rollback>
+            <sql>DROP POLICY IF EXISTS ai_sessions_user_policy ON ai_generation_sessions;</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="enable-rls-flashcards" author="migration-team" context="security">
+        <preConditions onFail="HALT">
+            <tableExists tableName="flashcards"/>
+        </preConditions>
+        
+        <comment>Enable Row Level Security on flashcards table</comment>
+
+        <sql>ALTER TABLE flashcards ENABLE ROW LEVEL SECURITY;</sql>
+
+        <rollback>
+            <sql>ALTER TABLE flashcards DISABLE ROW LEVEL SECURITY;</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="create-rls-policy-flashcards" author="migration-team" context="security">
+        <preConditions onFail="HALT">
+            <tableExists tableName="flashcards"/>
+        </preConditions>
+        
+        <comment>Create RLS policy for flashcards - users can only access their own flashcards</comment>
+
+        <sql>
+            CREATE POLICY flashcards_user_policy ON flashcards
+            FOR ALL
+            TO PUBLIC
+            USING (user_id = COALESCE(current_setting('app.current_user_id', true), '')::UUID);
+        </sql>
+
+        <rollback>
+            <sql>DROP POLICY IF EXISTS flashcards_user_policy ON flashcards;</sql>
+        </rollback>
+    </changeSet>
+
+    <!-- 
+    SECURITY IMPLEMENTATION DETAILS:
+    
+    1. POLICY SCOPE:
+       - FOR ALL: Covers SELECT, INSERT, UPDATE, DELETE operations
+       - TO PUBLIC: Applies to all database users (application uses single DB user)
+       - USING clause: Defines access condition
+    
+    2. SESSION VARIABLE HANDLING:
+       - current_setting('app.current_user_id', true): Gets session variable, returns NULL if not set
+       - COALESCE(..., ''): Converts NULL to empty string to prevent errors
+       - ::UUID: Casts to UUID type for comparison
+    
+    3. APPLICATION INTEGRATION REQUIRED:
+       ```java
+       // In Spring Security Filter or Interceptor
+       @Component
+       public class UserContextFilter implements Filter {
+           @Autowired
+           private JdbcTemplate jdbcTemplate;
+           
+           @Override
+           public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) {
+               try {
+                   String userId = getCurrentUserIdFromSecurityContext();
+                   if (userId != null) {
+                       jdbcTemplate.execute("SET app.current_user_id = '" + userId + "'");
+                   }
+                   chain.doFilter(request, response);
+               } finally {
+                   jdbcTemplate.execute("SET app.current_user_id = ''");
+               }
+           }
+       }
+       ```
+    
+    4. TESTING RLS POLICIES:
+       ```sql
+       SELECT COUNT(*) FROM flashcards;
+
+       SET app.current_user_id = 'some-uuid-here';
+       SELECT COUNT(*) FROM flashcards;
+       ```
+    
+    5. USERS TABLE EXEMPTION:
+       - Users table does NOT have RLS enabled
+       - Required for authentication (username/email lookup)
+       - Application-level security handles user data access
+    
+    SECURITY BENEFITS:
+    - Defense in depth: Database enforces user isolation even if application logic fails
+    - GDPR compliance: Automatic data isolation
+    - Simplified application code: No need for user_id filters in every query
+    - Audit trail: All data access automatically respects user boundaries
+    -->
+
+</databaseChangeLog>
