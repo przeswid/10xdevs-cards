@@ -30,47 +30,68 @@ The application requires a PostgreSQL database. Use Docker Compose for local dev
 ## Architecture and Package Structure
 
 ### Domain-Driven Design Structure
-The project follows DDD with hexagonal architecture:
+The project follows DDD with hexagonal architecture and CQRS pattern using Pipelinr library:
 
 ```
 com.ten.devs.cards.cards/
 ├── CardsApplication.java
-├── ApplicationConfiguration.java
-├── SecurityConfiguration.java
-├── sharedkernel/
-│   └── authentication/          # JWT authentication shared kernel
-│       ├── AuthenticationController.java
-│       ├── AuthenticationService.java
-│       ├── JwtService.java
-│       ├── JwtAuthenticationFilter.java
-│       └── dto/
+├── config/
+│   ├── ApplicationConfiguration.java
+│   ├── WebConfig.java
+│   └── auth/
+│       ├── SecurityConfiguration.java
+│       └── JwtAuthenticationFilter.java
 └── user/                        # User bounded context
     ├── domain/                  # Core business logic
     │   ├── User.java           # Domain entity (immutable)
     │   ├── UserId.java         # Value object
     │   ├── UserSnapshot.java   # Data transfer object
     │   ├── Role.java           # Enum
-    │   └── UserRepository.java # Repository interface
-    ├── application/             # Use cases/services
-    │   ├── UserService.java
-    │   └── dto/
+    │   ├── UserRepository.java # Repository interface
+    │   └── UserSpecification.java # Domain specifications
+    ├── application/             # Use cases/commands/queries
+    │   ├── command/            # Command handlers (CQRS)
+    │   │   ├── RegisterUserCommand.java
+    │   │   ├── RegisterUserCommandHandler.java
+    │   │   ├── LoginUserCommand.java
+    │   │   ├── LoginUserCommandHandler.java
+    │   │   └── JwtOperations.java
+    │   └── query/              # Query handlers (CQRS)
+    │       ├── GetUsersQuery.java
+    │       └── GetUsersQueryHandler.java
     ├── infrastructure/          # Technical implementation
-    │   ├── UserEntity.java     # JPA entity
-    │   ├── UserJpaRepository.java
-    │   ├── SqlDbUserRepository.java
-    │   └── UserMapper.java     # MapStruct mapper
+    │   └── db/
+    │       ├── UserEntity.java     # JPA entity
+    │       ├── UserJpaRepository.java
+    │       ├── SqlDbUserRepository.java
+    │       ├── UserMapper.java     # MapStruct mapper
+    │       └── UserSpecificationAdapter.java
     └── presentation/            # Web layer
+        ├── AuthenticationController.java
         ├── UserController.java
-        └── UserResponse.java
+        ├── request/
+        │   ├── RegisterUserRequest.java
+        │   └── LoginRequest.java
+        └── response/
+            ├── GetUserResponse.java
+            └── LoginResponse.java
 ```
 
 ### Key Architectural Patterns
+
+**CQRS (Command Query Responsibility Segregation):**
+- Uses Pipelinr library for implementing CQRS pattern
+- Commands for write operations (`RegisterUserCommand`, `LoginUserCommand`)
+- Queries for read operations (`GetUsersQuery`)
+- Command/Query handlers are separate components with single responsibility
+- Commands return domain identifiers, queries return DTOs
 
 **Domain Layer:**
 - Immutable domain entities with factory methods (`User.newUser()`, `User.fromSnapshot()`)
 - Value objects for strong typing (`UserId`)
 - Repository interfaces define contracts
 - Domain entities are separate from JPA entities
+- Domain specifications for complex queries (`UserSpecification`)
 
 **Infrastructure Layer:**
 - JPA entities (`UserEntity`) implement Spring Security `UserDetails`
@@ -103,6 +124,7 @@ com.ten.devs.cards.cards/
 - Spring Boot 3.5.7 (Web, Security, JPA, Actuator, Validation)
 - PostgreSQL driver + Liquibase
 - JWT processing (JJWT v0.11.5)
+- Pipelinr v0.11 for CQRS implementation
 - Lombok + MapStruct for code generation
 - Jakarta validation
 

@@ -25,9 +25,9 @@ class RegisterUserCommandHandler implements Command.Handler<RegisterUserCommand,
                 UserId.random(),
                 command.username(),
                 passwordEncoder.encode(command.password()),
-                command.email(),
                 command.firstName(),
                 command.lastName(),
+                command.email(),
                 List.of(Role.USER)
         );
 

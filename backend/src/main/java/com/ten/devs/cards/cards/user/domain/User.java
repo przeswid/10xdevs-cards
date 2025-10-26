@@ -19,7 +19,7 @@ public class User {
 
     private final List<Role> roles;
 
-    public static User newUser(UserId userId, String username, String password, String email, String firstName, String lastName, List<Role> roles) {
+    public static User newUser(UserId userId, String username, String password, String firstName, String lastName, String email, List<Role> roles) {
         return new User(userId, username, password, firstName, lastName, email, roles);
     }
 
