@@ -18,20 +18,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **TypeScript 5** - Type-safe JavaScript with strict configuration
 - **Tailwind CSS 4** - Utility-first CSS framework via Vite plugin
 - **Shadcn/ui** - Component library configured with New York style
+- **Node.js v22.14.0** - Required runtime version (see .nvmrc)
+
+## Project Origin
+
+This project is based on the **10x Astro Starter** template, customized to work with a Spring Boot backend instead of the template's default Supabase integration.
 
 ## Backend
 
-This project is a **frontend-only application**. Backend functionality is provided by a separate Spring Boot application.
+This project is a **frontend-only application**. Backend functionality is provided by a separate Spring Boot application (not Supabase).
 
 ## Architecture
 
-This is an Astro project configured for server-side rendering with React integration. Key architectural decisions:
+This is an Astro project configured for static site generation with React integration. Key architectural decisions:
 
-- **SSR-enabled**: Uses Astro's server output mode for dynamic rendering
+- **Static generation**: Uses Astro's static output mode (`output: "static"`)
 - **Hybrid rendering**: Astro components for static content, React for interactivity
 - **Path aliases**: `@/*` maps to `./src/*` for clean imports
 - **Component organization**: Shadcn/ui components in `src/components/ui/`
-- **API integration**: Frontend communicates with separate Spring Boot backend
+- **API integration**: Frontend communicates with separate Spring Boot backend via API client services
 
 ## Project Structure
 
@@ -56,8 +61,10 @@ src/
 
 ### Styling
 - Use `cn()` utility from `@/lib/utils` for conditional class merging
-- Follow Tailwind 4 patterns with utility-first approach
-- Leverage CSS custom properties for theming (configured in components.json)
+- Follow Tailwind 4 patterns with utility-first approach (imported via `@import "tailwindcss"`)
+- Leverage CSS custom properties for theming with oklch color space
+- Dark mode via custom variant: `@custom-variant dark (&:is(.dark *))`
+- Theme configuration in components.json (New York style, neutral base color)
 
 ### TypeScript
 - Extends Astro's strict TypeScript configuration
@@ -77,6 +84,15 @@ This frontend communicates with a separate Spring Boot backend:
 - Use proper TypeScript types for API requests/responses
 - Handle loading states and errors appropriately in components
 - Consider environment variables for backend API URL configuration
+
+## AI Development Support
+
+This project includes comprehensive AI assistant configurations:
+- **Cursor IDE rules**: Located in `.cursor/rules/` (8 specialized .mdc files)
+- **GitHub Copilot instructions**: Found in `.github/copilot-instructions.md`
+- **Windsurf configuration**: Available in `.windsurfrules`
+
+These files contain detailed guidelines for code patterns, accessibility, API integration, and framework-specific best practices.
 
 ## Key Guidelines
 
