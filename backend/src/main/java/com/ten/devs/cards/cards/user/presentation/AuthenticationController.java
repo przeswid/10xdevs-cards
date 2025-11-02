@@ -7,6 +7,7 @@ import com.ten.devs.cards.cards.user.application.command.LoginUserCommand;
 import com.ten.devs.cards.cards.user.application.command.RegisterUserCommand;
 import com.ten.devs.cards.cards.user.presentation.request.RegisterUserRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
+@Slf4j
 @RequestMapping("/auth")
 @RestController
 @RequiredArgsConstructor
@@ -24,6 +26,12 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     public ResponseEntity<UUID> register(@RequestBody RegisterUserRequest registerUserRequestDto) {
+        log.info("Register request received: username={}, email={}, firstName={}, lastName={}",
+                registerUserRequestDto.username(),
+                registerUserRequestDto.email(),
+                registerUserRequestDto.firstName(),
+                registerUserRequestDto.lastName());
+
         var registeredUserId = cqsService.send(
                 RegisterUserCommand.builder()
                         .username(registerUserRequestDto.username())
@@ -38,6 +46,8 @@ public class AuthenticationController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginRequest request) {
+        log.info("Login request received: username={}", request.username());
+
         LoginUserCommand command = LoginUserCommand.builder()
                 .username(request.username())
                 .password(request.password())

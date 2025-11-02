@@ -9,6 +9,7 @@ import com.ten.devs.cards.cards.flashcards.presentation.response.GetFlashcardsRe
 import com.ten.devs.cards.cards.flashcards.presentation.response.UpdateFlashcardResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,7 @@ import java.util.UUID;
  * REST controller for flashcard management
  * Implements CRUD operations for user flashcards
  */
+@Slf4j
 @RequestMapping("/flashcards")
 @RestController
 @RequiredArgsConstructor
@@ -36,6 +38,9 @@ public class FlashcardController {
             @RequestParam(required = false, defaultValue = "createdAt,desc") String sort,
             @RequestParam(required = false) String source
     ) {
+        log.info("Get flashcards request received: page={}, size={}, sort={}, source={}",
+                page, size, sort, source);
+
         // TODO: Extract userId from SecurityContext
         UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
 
@@ -58,6 +63,9 @@ public class FlashcardController {
     public ResponseEntity<CreateFlashcardResponse> createFlashcard(
             @Valid @RequestBody CreateFlashcardRequest request
     ) {
+        log.info("Create flashcard request received: frontContentLength={}, backContentLength={}",
+                request.frontContent().length(), request.backContent().length());
+
         // TODO: Extract userId from SecurityContext
         UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
 
@@ -79,6 +87,9 @@ public class FlashcardController {
             @PathVariable UUID flashcardId,
             @Valid @RequestBody UpdateFlashcardRequest request
     ) {
+        log.info("Update flashcard request received: flashcardId={}, frontContentLength={}, backContentLength={}",
+                flashcardId, request.frontContent().length(), request.backContent().length());
+
         // TODO: Extract userId from SecurityContext
         UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
 
@@ -98,6 +109,8 @@ public class FlashcardController {
      */
     @DeleteMapping("/{flashcardId}")
     public ResponseEntity<Void> deleteFlashcard(@PathVariable UUID flashcardId) {
+        log.info("Delete flashcard request received: flashcardId={}", flashcardId);
+
         // TODO: Extract userId from SecurityContext
         UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
 

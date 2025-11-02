@@ -5,11 +5,13 @@ import com.ten.devs.cards.cards.user.application.query.GetUsersQuery;
 import com.ten.devs.cards.cards.user.domain.UserSnapshot;
 import com.ten.devs.cards.cards.user.presentation.response.GetUserResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RequestMapping("/users")
 @RestController
 @RequiredArgsConstructor
@@ -19,6 +21,8 @@ class UserController {
 
     @GetMapping("/")
     public ResponseEntity<List<GetUserResponse>> allUsers() {
+        log.info("Get all users request received");
+
         GetUsersQuery query = new GetUsersQuery(null);
         List<UserSnapshot> userEntities = cqsService.send(query);
 

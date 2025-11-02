@@ -10,6 +10,7 @@ import com.ten.devs.cards.cards.flashcards.presentation.response.GetAiSessionRes
 import com.ten.devs.cards.cards.flashcards.presentation.response.GetAiSuggestionsResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,7 @@ import java.util.UUID;
  * REST controller for AI flashcard generation
  * Implements AI generation workflow: create session, monitor status, retrieve suggestions, approve
  */
+@Slf4j
 @RequestMapping("/ai")
 @RestController
 @RequiredArgsConstructor
@@ -34,6 +36,8 @@ public class AiGenerationController {
     public ResponseEntity<CreateAiSessionResponse> createAiSession(
             @Valid @RequestBody CreateAiSessionRequest request
     ) {
+        log.info("Create AI session request received: inputTextLength={}", request.inputText().length());
+
         // TODO: Extract userId from SecurityContext
         UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
 
@@ -53,6 +57,8 @@ public class AiGenerationController {
     public ResponseEntity<GetAiSessionResponse> getAiSession(
             @PathVariable UUID sessionId
     ) {
+        log.info("Get AI session request received: sessionId={}", sessionId);
+
         // TODO: Extract userId from SecurityContext
         UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
 
@@ -72,6 +78,8 @@ public class AiGenerationController {
     public ResponseEntity<GetAiSuggestionsResponse> getAiSuggestions(
             @PathVariable UUID sessionId
     ) {
+        log.info("Get AI suggestions request received: sessionId={}", sessionId);
+
         // TODO: Extract userId from SecurityContext
         UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
 
@@ -92,6 +100,9 @@ public class AiGenerationController {
             @PathVariable UUID sessionId,
             @Valid @RequestBody ApproveAiSuggestionsRequest request
     ) {
+        log.info("Approve AI suggestions request received: sessionId={}, suggestionsCount={}",
+                sessionId, request.approvedSuggestions().size());
+
         // TODO: Extract userId from SecurityContext
         UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
 
