@@ -1,38 +1,60 @@
 package com.ten.devs.cards.cards.flashcards.application.command;
 
 import an.awesome.pipelinr.Command;
+import com.ten.devs.cards.cards.flashcards.domain.AiGenerationSession;
+import com.ten.devs.cards.cards.flashcards.domain.AiGenerationSessionRepository;
+import com.ten.devs.cards.cards.flashcards.domain.AiGenerationSessionSnapshot;
 import com.ten.devs.cards.cards.flashcards.presentation.response.GetAiSessionResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
-import java.math.BigDecimal;
-import java.time.Instant;
 
 /**
  * Handler for GetAiGenerationSessionCommand
- * Retrieves AI generation session status and metrics
+ * Retrieves AI generation session status and metrics.
+ *
+ * Business rules:
+ * - Session must exist
+ * - User must own the session
+ *
+ * Follows hexagonal architecture:
+ * - Depends on domain repository PORTS (GENERIC interfaces)
+ * - No dependencies on infrastructure implementations
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 class GetAiGenerationSessionCommandHandler implements Command.Handler<GetAiGenerationSessionCommand, GetAiSessionResponse> {
 
+    private final AiGenerationSessionRepository sessionRepository;
+
     @Override
     public GetAiSessionResponse handle(GetAiGenerationSessionCommand command) {
-        // TODO: Replace with actual logic:
-        // - Find session by ID
-        // - Verify ownership (userId matches)
-        // - Return session status and metrics
-        // - Throw 404 if not found, 403 if not owned by user
-        // For now, return dummy data
+        log.info("Retrieving AI generation session: {}, user: {}",
+            command.sessionId(), command.userId());
 
+        // 1. Find session and verify it exists
+        AiGenerationSession session = sessionRepository.findById(command.sessionId())
+            .orElseThrow(() -> new IllegalArgumentException(
+                "Session not found: " + command.sessionId()));
+
+        // 2. Verify ownership using domain method
+        session.ensureOwnedBy(command.userId());
+
+        // 3. Get snapshot to access state
+        AiGenerationSessionSnapshot snapshot = session.toSnapshot();
+
+        log.debug("Found session {} with status: {}", snapshot.id(), snapshot.status());
+
+        // 4. Map to response DTO
         return new GetAiSessionResponse(
-                command.sessionId(),
-                "COMPLETED",
-                12,  // generatedCount
-                8,   // acceptedCount
-                "gpt-4",
-                new BigDecimal("0.0250"),  // apiCost
-                Instant.now().minusSeconds(600)  // created 10 minutes ago
+            snapshot.id(),
+            snapshot.status().name(),
+            snapshot.generatedCount(),
+            snapshot.acceptedCount(),
+            snapshot.aiModel(),
+            snapshot.apiCost(),
+            snapshot.createdAt()
         );
     }
 }

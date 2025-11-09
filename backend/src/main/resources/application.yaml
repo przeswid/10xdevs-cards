@@ -19,9 +19,31 @@ spring:
 
   liquibase:
     change-log: classpath:db/changelog/liquibase/changelog-master.xml
-    contexts: core,performance,security
+    contexts: core,performance,security,data
 
 security:
   jwt:
     secret-key: 26db00246ac685a4d4365e5243f1da8a63d2965d273521d97bb46232f02ea40c
     expiration-time: 36000000 # 1 hour
+
+openrouter:
+  api-key: ${OPENROUTER_API_KEY:}
+  app-url: ${APP_URL:http://localhost:8080}
+  app-name: "10xDevs Cards"
+  default-model: "openai/gpt-4o-mini"
+  default-parameters:
+    temperature: 0.7
+    max-tokens: 2000
+    top-p: 0.9
+    frequency-penalty: 0.3
+    presence-penalty: 0.1
+  retry:
+    max-attempts: 3
+    initial-backoff: 1000
+    max-backoff: 10000
+    multiplier: 2.0
+  circuit-breaker:
+    sliding-window-size: 10
+    failure-rate-threshold: 50.0
+    wait-duration-in-open-state: 60000
+    permitted-calls-in-half-open-state: 3

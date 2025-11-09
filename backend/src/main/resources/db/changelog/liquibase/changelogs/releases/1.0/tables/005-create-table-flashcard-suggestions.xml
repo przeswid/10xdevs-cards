@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <!--
+    FLASHCARD_SUGGESTIONS TABLE CREATION
+    =====================================
+
+    PURPOSE: Temporary storage for AI-generated flashcard suggestions before user acceptance
+    BUSINESS CONTEXT: Enables user review and selection of AI-generated flashcards
+
+    DESIGN DECISIONS:
+    - UUID primary key for unique identification
+    - Temporary storage - deleted after user accepts/rejects
+    - No user_id (derived from session)
+    - Content limited to 1000 chars (same as flashcards)
+    - Linked to generation session for tracking
+
+    DEPENDENCIES: ai_generation_sessions table (foreign key reference)
+    -->
+
+    <changeSet id="create-table-flashcard-suggestions" author="migration-team" context="core">
+        <preConditions onFail="HALT">
+            <tableExists tableName="ai_generation_sessions"/>
+        </preConditions>
+
+        <comment>Create flashcard_suggestions table - temporary storage for AI-generated flashcards</comment>
+
+        <createTable tableName="flashcard_suggestions"
+                     remarks="Temporary storage for AI-generated flashcard suggestions awaiting user review">
+            <column name="id" type="UUID" remarks="Primary key - unique suggestion identifier">
+                <constraints primaryKey="true" primaryKeyName="pk_flashcard_suggestions"/>
+            </column>
+
+            <column name="session_id" type="UUID"
+                    remarks="Foreign key to ai_generation_sessions - generation session that created this suggestion">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="front_content" type="VARCHAR(1000)"
+                    remarks="Question or prompt side of flashcard (max 1000 chars)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="back_content" type="VARCHAR(1000)"
+                    remarks="Answer or explanation side of flashcard (max 1000 chars)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"
+                    remarks="Suggestion creation timestamp"
+                    defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <rollback>
+            <dropTable tableName="flashcard_suggestions"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="add-check-constraints-flashcard-suggestions" author="migration-team" context="core">
+        <preConditions onFail="HALT">
+            <tableExists tableName="flashcard_suggestions"/>
+        </preConditions>
+
+        <comment>Add CHECK constraints for flashcard_suggestions data validation</comment>
+
+        <sql>
+            <![CDATA[
+            ALTER TABLE flashcard_suggestions ADD CONSTRAINT ck_suggestions_front_content_not_empty
+            CHECK (LENGTH(TRIM(front_content)) > 0);
+
+            ALTER TABLE flashcard_suggestions ADD CONSTRAINT ck_suggestions_back_content_not_empty
+            CHECK (LENGTH(TRIM(back_content)) > 0);
+            ]]>
+        </sql>
+
+        <rollback>
+            <sql>
+                <![CDATA[
+                ALTER TABLE flashcard_suggestions DROP CONSTRAINT IF EXISTS ck_suggestions_front_content_not_empty;
+                ALTER TABLE flashcard_suggestions DROP CONSTRAINT IF EXISTS ck_suggestions_back_content_not_empty;
+                ]]>
+            </sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="add-foreign-key-flashcard-suggestions" author="migration-team" context="core">
+        <preConditions onFail="HALT">
+            <tableExists tableName="flashcard_suggestions"/>
+            <tableExists tableName="ai_generation_sessions"/>
+        </preConditions>
+
+        <comment>Add foreign key constraint linking suggestions to generation sessions</comment>
+
+        <addForeignKeyConstraint
+            baseTableName="flashcard_suggestions"
+            baseColumnNames="session_id"
+            constraintName="fk_suggestions_session"
+            referencedTableName="ai_generation_sessions"
+            referencedColumnNames="id"
+            onDelete="CASCADE"
+            onUpdate="CASCADE"/>
+
+        <rollback>
+            <dropForeignKeyConstraint
+                baseTableName="flashcard_suggestions"
+                constraintName="fk_suggestions_session"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="add-index-flashcard-suggestions-session-id" author="migration-team" context="core">
+        <preConditions onFail="HALT">
+            <tableExists tableName="flashcard_suggestions"/>
+        </preConditions>
+
+        <comment>Add index on session_id for efficient lookup of suggestions by session</comment>
+
+        <createIndex indexName="idx_suggestions_session_id" tableName="flashcard_suggestions">
+            <column name="session_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex indexName="idx_suggestions_session_id" tableName="flashcard_suggestions"/>
+        </rollback>
+    </changeSet>
+
+    <!--
+    BUSINESS RULES:
+    1. Front and back content cannot be empty or whitespace-only
+    2. Suggestions are linked to generation session (CASCADE delete)
+    3. When session is deleted, all its suggestions are automatically deleted
+    4. Suggestions are temporary - they're deleted after user accepts/rejects them
+
+    LIFECYCLE:
+    1. AI generates flashcards → saved as suggestions
+    2. User reviews suggestions
+    3. User accepts some/all → converted to flashcards (source='AI')
+    4. All suggestions for session are deleted
+
+    PERFORMANCE:
+    - Index on session_id for fast lookup
+    - CASCADE delete for automatic cleanup
+    -->
+
+</databaseChangeLog>

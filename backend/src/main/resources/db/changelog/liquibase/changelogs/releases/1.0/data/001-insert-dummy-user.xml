@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <!--
+    DUMMY USER DATA INSERTION
+    =========================
+
+    PURPOSE: Insert dummy/test user for development and testing
+    BUSINESS CONTEXT: Required for testing AI generation endpoints without authentication
+
+    IMPORTANT:
+    - This user should ONLY exist in development/test environments
+    - In production, this changeset should be disabled via context
+    - Password is BCrypt hashed "password123"
+    -->
+
+    <changeSet id="insert-dummy-user" author="dev-team" context="data">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="users"/>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM users WHERE id = '00000000-0000-0000-0000-000000000001'
+            </sqlCheck>
+        </preConditions>
+
+        <comment>Insert dummy user for development and testing purposes</comment>
+
+        <insert tableName="users">
+            <column name="id" value="00000000-0000-0000-0000-000000000001"/>
+            <column name="username" value="dummy.user"/>
+            <column name="email" value="dummy@example.com"/>
+            <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+
+        <rollback>
+            <delete tableName="users">
+                <where>id = '00000000-0000-0000-0000-000000000001'</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="insert-dummy-user-role" author="dev-team" context="data">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="user_roles"/>
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*) FROM users WHERE id = '00000000-0000-0000-0000-000000000001'
+            </sqlCheck>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM user_roles
+                WHERE user_id = '00000000-0000-0000-0000-000000000001' AND role = 'USER'
+            </sqlCheck>
+        </preConditions>
+
+        <comment>Insert USER role for dummy user</comment>
+
+        <insert tableName="user_roles">
+            <column name="user_id" value="00000000-0000-0000-0000-000000000001"/>
+            <column name="role" value="USER"/>
+        </insert>
+
+        <rollback>
+            <delete tableName="user_roles">
+                <where>user_id = '00000000-0000-0000-0000-000000000001'</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+    <!--
+    SECURITY NOTES:
+    1. Password is BCrypt hashed "password123" - DO NOT use in production
+    2. This user is for development/testing only
+    3. Context "data" should not be active in production
+    4. Preconditions prevent duplicate insertion
+
+    USAGE:
+    - Used by AI generation endpoints when no authentication is present
+    - Allows testing without implementing full authentication flow
+    - Should be replaced with proper authentication in production
+
+    CREDENTIALS (for reference):
+    - Username: dummy.user
+    - Email: dummy@example.com
+    - Password: password123 (hashed)
+    -->
+
+</databaseChangeLog>

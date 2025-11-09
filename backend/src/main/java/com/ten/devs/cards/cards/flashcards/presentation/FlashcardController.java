@@ -42,7 +42,7 @@ public class FlashcardController {
                 page, size, sort, source);
 
         // TODO: Extract userId from SecurityContext
-        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
+        UUID userId = UUID.fromString("§"); // Dummy user ID
 
         GetFlashcardsCommand command = GetFlashcardsCommand.builder()
                 .userId(userId)

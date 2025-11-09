@@ -41,7 +41,8 @@
     <!-- Phase 2: User-Dependent Tables -->
     <include file="db/changelog/liquibase/changelogs/releases/1.0/tables/002-create-table-user-roles.xml"/>
     <include file="db/changelog/liquibase/changelogs/releases/1.0/tables/003-create-table-ai-generation-sessions.xml"/>
-    
+    <include file="db/changelog/liquibase/changelogs/releases/1.0/tables/005-create-table-flashcard-suggestions.xml"/>
+
     <!-- Phase 3: Multi-Dependency Tables -->
     <include file="db/changelog/liquibase/changelogs/releases/1.0/tables/004-create-table-flashcards.xml"/>
     
@@ -56,8 +57,8 @@
     
     <!-- Phase 6: Security Policies -->
     <include file="db/changelog/liquibase/changelogs/releases/1.0/constraints/002-create-rls-policies.xml"/>
-    
-    <!-- Phase 7: Initial Data (Future) -->
-    <!-- <include file="db/changelog/liquibase/changelogs/releases/1.0/data/001-seed-data.xml"/> -->
+
+    <!-- Phase 7: Initial/Test Data -->
+    <include file="db/changelog/liquibase/changelogs/releases/1.0/data/001-insert-dummy-user.xml"/>
 
 </databaseChangeLog>
