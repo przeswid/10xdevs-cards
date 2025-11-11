@@ -2,61 +2,55 @@ package com.ten.devs.cards.cards.flashcards.presentation;
 
 import an.awesome.pipelinr.Pipeline;
 import com.ten.devs.cards.cards.flashcards.application.command.*;
-import com.ten.devs.cards.cards.flashcards.presentation.request.ApproveAiSuggestionsRequest;
-import com.ten.devs.cards.cards.flashcards.presentation.request.CreateAiSessionRequest;
-import com.ten.devs.cards.cards.flashcards.presentation.response.ApproveAiSuggestionsResponse;
-import com.ten.devs.cards.cards.flashcards.presentation.response.CreateAiSessionResponse;
-import com.ten.devs.cards.cards.flashcards.presentation.response.GetAiSessionResponse;
-import com.ten.devs.cards.cards.flashcards.presentation.response.GetAiSuggestionsResponse;
-import jakarta.validation.Valid;
+import com.ten.devs.cards.cards.generated.api.AiGenerationApi;
+import com.ten.devs.cards.cards.generated.model.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
+import java.time.ZoneOffset;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * REST controller for AI flashcard generation
  * Implements AI generation workflow: create session, monitor status, retrieve suggestions, approve
  */
 @Slf4j
-@RequestMapping("/ai")
 @RestController
 @RequiredArgsConstructor
-public class AiGenerationController {
+public class AiGenerationController implements AiGenerationApi {
 
     private final Pipeline cqsService;
 
-    /**
-     * POST /ai/sessions - Start AI flashcard generation session
-     */
-    @PostMapping("/sessions")
-    public ResponseEntity<CreateAiSessionResponse> createAiSession(
-            @Valid @RequestBody CreateAiSessionRequest request
-    ) {
-        log.info("Create AI session request received: inputTextLength={}", request.inputText().length());
+    @Override
+    public ResponseEntity<CreateAiSessionResponse> createAiSession(CreateAiSessionRequest createAiSessionRequest) {
+        log.info("Create AI session request received: inputTextLength={}", createAiSessionRequest.getInputText().length());
 
         // TODO: Extract userId from SecurityContext
         UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
 
         CreateAiGenerationSessionCommand command = CreateAiGenerationSessionCommand.builder()
                 .userId(userId)
-                .inputText(request.inputText())
+                .inputText(createAiSessionRequest.getInputText())
                 .build();
 
-        CreateAiSessionResponse response = cqsService.send(command);
+        com.ten.devs.cards.cards.flashcards.presentation.response.CreateAiSessionResponse domainResponse = cqsService.send(command);
+
+        CreateAiSessionResponse response = new CreateAiSessionResponse(
+                domainResponse.sessionId(),
+                CreateAiSessionResponse.StatusEnum.fromValue(domainResponse.status()),
+                domainResponse.createdAt().atOffset(ZoneOffset.UTC)
+        );
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * GET /ai/sessions/{sessionId} - Get AI generation session status and metrics
-     */
-    @GetMapping("/sessions/{sessionId}")
-    public ResponseEntity<GetAiSessionResponse> getAiSession(
-            @PathVariable UUID sessionId
-    ) {
+    @Override
+    public ResponseEntity<GetAiSessionResponse> getAiSession(UUID sessionId) {
         log.info("Get AI session request received: sessionId={}", sessionId);
 
         // TODO: Extract userId from SecurityContext
@@ -67,17 +61,29 @@ public class AiGenerationController {
                 .sessionId(sessionId)
                 .build();
 
-        GetAiSessionResponse response = cqsService.send(command);
+        com.ten.devs.cards.cards.flashcards.presentation.response.GetAiSessionResponse domainResponse = cqsService.send(command);
+
+        GetAiSessionResponse response = new GetAiSessionResponse(
+                domainResponse.sessionId(),
+                GetAiSessionResponse.StatusEnum.fromValue(domainResponse.status()),
+                domainResponse.generatedCount(),
+                domainResponse.acceptedCount(),
+                domainResponse.createdAt().atOffset(ZoneOffset.UTC)
+        );
+
+        // Set optional fields using setters
+        if (domainResponse.aiModel() != null) {
+            response.aiModel(domainResponse.aiModel());
+        }
+        if (domainResponse.apiCost() != null) {
+            response.apiCost(domainResponse.apiCost().doubleValue());
+        }
+
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * GET /ai/sessions/{sessionId}/suggestions - Retrieve AI-generated flashcard suggestions
-     */
-    @GetMapping("/sessions/{sessionId}/suggestions")
-    public ResponseEntity<GetAiSuggestionsResponse> getAiSuggestions(
-            @PathVariable UUID sessionId
-    ) {
+    @Override
+    public ResponseEntity<GetAiSuggestionsResponse> getAiSuggestions(UUID sessionId) {
         log.info("Get AI suggestions request received: sessionId={}", sessionId);
 
         // TODO: Extract userId from SecurityContext
@@ -88,31 +94,63 @@ public class AiGenerationController {
                 .sessionId(sessionId)
                 .build();
 
-        GetAiSuggestionsResponse response = cqsService.send(command);
+        com.ten.devs.cards.cards.flashcards.presentation.response.GetAiSuggestionsResponse domainResponse = cqsService.send(command);
+
+        GetAiSuggestionsResponse response = new GetAiSuggestionsResponse();
+        response.setSessionId(domainResponse.sessionId());
+        response.setStatus(GetAiSuggestionsResponse.StatusEnum.fromValue(domainResponse.status()));
+        response.setSuggestions(domainResponse.suggestions().stream()
+                .map(s -> new FlashcardSuggestion(
+                        s.suggestionId(),
+                        s.frontContent(),
+                        s.backContent()
+                ))
+                .collect(Collectors.toList()));
+
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * POST /ai/sessions/{sessionId}/approve - Approve and save selected AI-generated flashcard suggestions
-     */
-    @PostMapping("/sessions/{sessionId}/approve")
+    @Override
     public ResponseEntity<ApproveAiSuggestionsResponse> approveAiSuggestions(
-            @PathVariable UUID sessionId,
-            @Valid @RequestBody ApproveAiSuggestionsRequest request
+            UUID sessionId,
+            ApproveAiSuggestionsRequest approveAiSuggestionsRequest
     ) {
         log.info("Approve AI suggestions request received: sessionId={}, suggestionsCount={}",
-                sessionId, request.approvedSuggestions().size());
+                sessionId, approveAiSuggestionsRequest.getApprovedSuggestions().size());
 
         // TODO: Extract userId from SecurityContext
         UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
 
+        // Convert generated request to domain request
+        com.ten.devs.cards.cards.flashcards.presentation.request.ApproveAiSuggestionsRequest domainRequest =
+                new com.ten.devs.cards.cards.flashcards.presentation.request.ApproveAiSuggestionsRequest(
+                        approveAiSuggestionsRequest.getApprovedSuggestions().stream()
+                                .map(s -> new com.ten.devs.cards.cards.flashcards.presentation.request.ApproveAiSuggestionsRequest.ApprovedSuggestion(
+                                        s.getSuggestionId(),
+                                        s.getFrontContent().isPresent() ? s.getFrontContent().get() : null,
+                                        s.getBackContent().isPresent() ? s.getBackContent().get() : null
+                                ))
+                                .toList()
+                );
+
         ApproveAiSuggestionsCommand command = ApproveAiSuggestionsCommand.builder()
                 .userId(userId)
                 .sessionId(sessionId)
-                .request(request)
+                .request(domainRequest)
                 .build();
 
-        ApproveAiSuggestionsResponse response = cqsService.send(command);
+        com.ten.devs.cards.cards.flashcards.presentation.response.ApproveAiSuggestionsResponse domainResponse = cqsService.send(command);
+
+        ApproveAiSuggestionsResponse response = new ApproveAiSuggestionsResponse();
+        response.setCreatedFlashcards(domainResponse.createdFlashcards().stream()
+                .map(fc -> new CreatedFlashcard(
+                        fc.flashcardId(),
+                        fc.frontContent(),
+                        fc.backContent(),
+                        CreatedFlashcard.SourceEnum.fromValue(fc.source())
+                ))
+                .collect(Collectors.toList()));
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

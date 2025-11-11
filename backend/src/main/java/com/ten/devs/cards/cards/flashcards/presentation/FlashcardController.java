@@ -2,47 +2,41 @@ package com.ten.devs.cards.cards.flashcards.presentation;
 
 import an.awesome.pipelinr.Pipeline;
 import com.ten.devs.cards.cards.flashcards.application.command.*;
-import com.ten.devs.cards.cards.flashcards.presentation.request.CreateFlashcardRequest;
-import com.ten.devs.cards.cards.flashcards.presentation.request.UpdateFlashcardRequest;
-import com.ten.devs.cards.cards.flashcards.presentation.response.CreateFlashcardResponse;
-import com.ten.devs.cards.cards.flashcards.presentation.response.GetFlashcardsResponse;
-import com.ten.devs.cards.cards.flashcards.presentation.response.UpdateFlashcardResponse;
-import jakarta.validation.Valid;
+import com.ten.devs.cards.cards.generated.api.FlashcardsApi;
+import com.ten.devs.cards.cards.generated.model.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RestController;
 
+import java.time.ZoneOffset;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * REST controller for flashcard management
  * Implements CRUD operations for user flashcards
  */
 @Slf4j
-@RequestMapping("/flashcards")
 @RestController
 @RequiredArgsConstructor
-public class FlashcardController {
+public class FlashcardController implements FlashcardsApi {
 
     private final Pipeline cqsService;
 
-    /**
-     * GET /flashcards - List user's flashcards with pagination
-     */
-    @GetMapping
+    @Override
     public ResponseEntity<GetFlashcardsResponse> getFlashcards(
-            @RequestParam(required = false, defaultValue = "0") Integer page,
-            @RequestParam(required = false, defaultValue = "20") Integer size,
-            @RequestParam(required = false, defaultValue = "createdAt,desc") String sort,
-            @RequestParam(required = false) String source
+            Integer page,
+            Integer size,
+            String sort,
+            String source
     ) {
         log.info("Get flashcards request received: page={}, size={}, sort={}, source={}",
                 page, size, sort, source);
 
         // TODO: Extract userId from SecurityContext
-        UUID userId = UUID.fromString("§"); // Dummy user ID
+        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
 
         GetFlashcardsCommand command = GetFlashcardsCommand.builder()
                 .userId(userId)
@@ -52,43 +46,62 @@ public class FlashcardController {
                 .source(source)
                 .build();
 
-        GetFlashcardsResponse response = cqsService.send(command);
+        com.ten.devs.cards.cards.flashcards.presentation.response.GetFlashcardsResponse domainResponse = cqsService.send(command);
+
+        GetFlashcardsResponse response = new GetFlashcardsResponse();
+        response.setContent(domainResponse.content().stream()
+                .map(fc -> new FlashcardSummary(
+                        fc.flashcardId(),
+                        fc.frontContent(),
+                        fc.backContent(),
+                        FlashcardSummary.SourceEnum.fromValue(fc.source()),
+                        fc.createdAt().atOffset(ZoneOffset.UTC),
+                        fc.updatedAt().atOffset(ZoneOffset.UTC)
+                ))
+                .collect(Collectors.toList()));
+
+        PageInfo pageInfo = new PageInfo(
+                domainResponse.page().number(),
+                domainResponse.page().size(),
+                domainResponse.page().totalElements(),
+                domainResponse.page().totalPages()
+        );
+        response.setPage(pageInfo);
+
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * POST /flashcards - Create a new manual flashcard
-     */
-    @PostMapping
-    public ResponseEntity<CreateFlashcardResponse> createFlashcard(
-            @Valid @RequestBody CreateFlashcardRequest request
-    ) {
+    @Override
+    public ResponseEntity<CreateFlashcardResponse> createFlashcard(CreateFlashcardRequest createFlashcardRequest) {
         log.info("Create flashcard request received: frontContentLength={}, backContentLength={}",
-                request.frontContent().length(), request.backContent().length());
+                createFlashcardRequest.getFrontContent().length(), createFlashcardRequest.getBackContent().length());
 
         // TODO: Extract userId from SecurityContext
         UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
 
         CreateFlashcardCommand command = CreateFlashcardCommand.builder()
                 .userId(userId)
-                .frontContent(request.frontContent())
-                .backContent(request.backContent())
+                .frontContent(createFlashcardRequest.getFrontContent())
+                .backContent(createFlashcardRequest.getBackContent())
                 .build();
 
-        CreateFlashcardResponse response = cqsService.send(command);
+        com.ten.devs.cards.cards.flashcards.presentation.response.CreateFlashcardResponse domainResponse = cqsService.send(command);
+
+        CreateFlashcardResponse response = new CreateFlashcardResponse(
+                domainResponse.flashcardId(),
+                domainResponse.frontContent(),
+                domainResponse.backContent(),
+                CreateFlashcardResponse.SourceEnum.fromValue(domainResponse.source()),
+                domainResponse.createdAt().atOffset(ZoneOffset.UTC)
+        );
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * PUT /flashcards/{flashcardId} - Update existing flashcard
-     */
-    @PutMapping("/{flashcardId}")
-    public ResponseEntity<UpdateFlashcardResponse> updateFlashcard(
-            @PathVariable UUID flashcardId,
-            @Valid @RequestBody UpdateFlashcardRequest request
-    ) {
+    @Override
+    public ResponseEntity<UpdateFlashcardResponse> updateFlashcard(UUID flashcardId, UpdateFlashcardRequest updateFlashcardRequest) {
         log.info("Update flashcard request received: flashcardId={}, frontContentLength={}, backContentLength={}",
-                flashcardId, request.frontContent().length(), request.backContent().length());
+                flashcardId, updateFlashcardRequest.getFrontContent().length(), updateFlashcardRequest.getBackContent().length());
 
         // TODO: Extract userId from SecurityContext
         UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
@@ -96,19 +109,25 @@ public class FlashcardController {
         UpdateFlashcardCommand command = UpdateFlashcardCommand.builder()
                 .userId(userId)
                 .flashcardId(flashcardId)
-                .frontContent(request.frontContent())
-                .backContent(request.backContent())
+                .frontContent(updateFlashcardRequest.getFrontContent())
+                .backContent(updateFlashcardRequest.getBackContent())
                 .build();
 
-        UpdateFlashcardResponse response = cqsService.send(command);
+        com.ten.devs.cards.cards.flashcards.presentation.response.UpdateFlashcardResponse domainResponse = cqsService.send(command);
+
+        UpdateFlashcardResponse response = new UpdateFlashcardResponse(
+                domainResponse.flashcardId(),
+                domainResponse.frontContent(),
+                domainResponse.backContent(),
+                UpdateFlashcardResponse.SourceEnum.fromValue(domainResponse.source()),
+                domainResponse.updatedAt().atOffset(ZoneOffset.UTC)
+        );
+
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * DELETE /flashcards/{flashcardId} - Delete flashcard permanently
-     */
-    @DeleteMapping("/{flashcardId}")
-    public ResponseEntity<Void> deleteFlashcard(@PathVariable UUID flashcardId) {
+    @Override
+    public ResponseEntity<Void> deleteFlashcard(UUID flashcardId) {
         log.info("Delete flashcard request received: flashcardId={}", flashcardId);
 
         // TODO: Extract userId from SecurityContext

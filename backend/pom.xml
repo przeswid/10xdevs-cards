@@ -124,6 +124,13 @@
             <version>1.5.5.Final</version>
         </dependency>
 
+        <!-- OpenAPI annotations -->
+        <dependency>
+            <groupId>org.openapitools</groupId>
+            <artifactId>jackson-databind-nullable</artifactId>
+            <version>0.2.6</version>
+        </dependency>
+
         <!-- Tests -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -140,6 +147,39 @@
 
 	<build>
 		<plugins>
+            <!-- OpenAPI Generator Plugin -->
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <version>7.2.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/open-api.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <apiPackage>com.ten.devs.cards.cards.generated.api</apiPackage>
+                            <modelPackage>com.ten.devs.cards.cards.generated.model</modelPackage>
+                            <configOptions>
+                                <interfaceOnly>true</interfaceOnly>
+                                <skipDefaultInterface>true</skipDefaultInterface>
+                                <useTags>true</useTags>
+                                <useSpringBoot3>true</useSpringBoot3>
+                                <jakarta>true</jakarta>
+                                <delegatePattern>false</delegatePattern>
+                                <serializableModel>true</serializableModel>
+                                <useOptional>false</useOptional>
+                                <hideGenerationTimestamp>true</hideGenerationTimestamp>
+                                <documentationProvider>none</documentationProvider>
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Maven Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
