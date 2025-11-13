@@ -1,0 +1,46 @@
+spring:
+  datasource:
+    # Testcontainers will override these values dynamically
+    url: jdbc:tc:postgresql:15:///test_db
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+    username: test
+    password: test
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+  # Security settings for tests
+  security:
+    jwt:
+      secret: test-secret-key-for-testing-purposes-only-minimum-256-bits-required-for-hs256-algorithm
+      expiration: 3600000 # 1 hour
+
+  # Disable actuator endpoints in tests
+  actuator:
+    enabled: false
+
+# Logging configuration for tests
+logging:
+  level:
+    root: INFO
+    com.ten.devs.cards: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: INFO
+    org.testcontainers: INFO
+    com.github.dockerjava: WARN
+    org.springframework.test: INFO
+
+# Testcontainers settings
+testcontainers:
+  reuse:
+    enable: true
