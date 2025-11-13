@@ -1,9 +1,10 @@
 # Critical Analysis of Tech Stack (Version 2)
 
 **Analyzed tech stack:**
-*   **Backend:** Java (Spring Boot 3.x) + PostgreSQL.
+*   **Backend:** Java 21 (Spring Boot 3.5.7) + PostgreSQL.
 *   **AI:** Communication through Openrouter.ai.
 *   **CI/CD and Hosting:** GitHub Actions, DigitalOcean (Docker image).
+*   **Testing:** JUnit 5, AssertJ, Mockito, Spring Boot Test, Testcontainers, WireMock, RestAssured, JaCoCo, SonarQube, ArchUnit.
 
 ---
 
@@ -54,6 +55,34 @@ Below is a detailed response to each question in the context of this new stack.
 *   **Yes, fully.**
     *   **Spring Security** is a mature, powerful framework recognized as an industry standard for securing applications. It will allow you to precisely implement both authentication (through OAuth 2.0 with Google) and authorization (securing API endpoints, verifying whether a user has access to their resources).
     *   Storing API keys (for Openrouter.ai) on the backend side is a fundamental security principle, and this stack fully enables and promotes this.
+
+#### 7. Testing Strategy and Quality Assurance
+
+The project employs a comprehensive testing strategy with industry-standard tools:
+
+**Unit Testing:**
+*   **JUnit 5** - Modern test framework with parameterized test support and improved assertions
+*   **AssertJ** - Fluent assertion library for more readable and maintainable test code
+*   **Mockito** - Industry-standard mocking framework for isolating dependencies in unit tests
+*   **Target:** 80%+ code coverage for domain and application layers
+
+**Integration Testing:**
+*   **Spring Boot Test** - Full application context testing with `@SpringBootTest`
+*   **Testcontainers** - Lightweight, throwaway PostgreSQL containers for realistic database integration tests
+*   **WireMock** - HTTP mocking for external API (OpenRouter) testing without hitting real endpoints
+*   **RestAssured** - Fluent API for testing HTTP endpoints with readable syntax
+
+**Code Quality and Architecture:**
+*   **JaCoCo** - Code coverage reporting with 80%+ target for critical layers
+*   **SonarQube** - Static code analysis, quality gates, and technical debt management
+*   **ArchUnit** - Automated enforcement of DDD patterns and hexagonal architecture rules
+
+**Benefits:**
+*   Comprehensive test coverage across all architectural layers
+*   Isolated testing of domain logic (unit tests) and integration points
+*   Realistic database testing without requiring external infrastructure
+*   Automated architecture rule enforcement prevents anti-patterns
+*   Quality gates ensure code meets standards before deployment
 
 ### Summary and Recommendation
 

@@ -130,6 +130,18 @@ com.ten.devs.cards.cards/
 - Lombok + MapStruct for code generation
 - Jakarta validation
 
+**Testing Dependencies:**
+- JUnit 5 - Test framework with parameterized test support
+- AssertJ - Fluent assertions for test readability
+- Mockito - Mocking framework for unit tests
+- Spring Boot Test - Full application context testing
+- Testcontainers - PostgreSQL container for integration tests
+- WireMock - External API mocking (OpenRouter)
+- RestAssured - HTTP endpoint testing with fluent API
+- JaCoCo - Code coverage reporting (target: 80%+)
+- SonarQube - Static code analysis and quality gates
+- ArchUnit - Architecture rule enforcement for DDD patterns
+
 ## DDD Best Practices - CRITICAL RULES
 
 This section documents critical DDD patterns that MUST be followed to avoid the **Anemic Domain Model anti-pattern**.

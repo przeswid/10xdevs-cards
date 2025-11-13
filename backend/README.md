@@ -41,6 +41,18 @@ Built with modern architectural patterns including Domain-Driven Design (DDD), h
 - **Spring Boot Validation** - Input validation
 - **Spring Security Test** - Security testing utilities
 
+### Testing Frameworks & Libraries
+- **JUnit 5** - Primary test framework with parameterized test support
+- **AssertJ** - Fluent assertions for improved test readability
+- **Mockito** - Mocking framework for unit test dependencies
+- **Spring Boot Test** - `@SpringBootTest` for full application context testing
+- **Testcontainers** - PostgreSQL container for integration tests
+- **WireMock** - HTTP mocking for external API (OpenRouter) testing
+- **RestAssured** - Fluent API for HTTP endpoint testing
+- **JaCoCo** - Code coverage reporting (target: 80%+)
+- **SonarQube** - Static code analysis and quality gates
+- **ArchUnit** - Architecture rule enforcement for DDD patterns
+
 ## Getting Started Locally
 
 ### Prerequisites
