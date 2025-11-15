@@ -1,10 +1,8 @@
 package com.ten.devs.cards.cards;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class CardsApplicationTests {
+class CardsApplicationTests extends IntegrationTestBase {
 
 	@Test
 	void contextLoads() {

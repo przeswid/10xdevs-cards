@@ -48,12 +48,16 @@ public abstract class IntegrationTestBase {
      * Using PostgreSQL 15 to match production environment.
      */
     @Container
-    protected static final PostgreSQLContainer<?> postgreSQLContainer =
-        new PostgreSQLContainer<>("postgres:15-alpine")
+    protected static final PostgreSQLContainer<?> postgreSQLContainer;
+
+    static {
+        postgreSQLContainer = new PostgreSQLContainer<>("postgres:15-alpine")
             .withDatabaseName("test_db")
             .withUsername("test")
             .withPassword("test")
             .withReuse(true);
+        postgreSQLContainer.start();
+    }
 
     /**
      * Dynamically configure Spring datasource properties from Testcontainers.

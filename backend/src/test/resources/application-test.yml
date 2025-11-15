@@ -1,10 +1,7 @@
 spring:
   datasource:
-    # Testcontainers will override these values dynamically
-    url: jdbc:tc:postgresql:15:///test_db
-    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
-    username: test
-    password: test
+    # Testcontainers will override these values dynamically via @DynamicPropertySource
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
@@ -17,7 +14,8 @@ spring:
 
   liquibase:
     enabled: true
-    change-log: classpath:db/changelog/db.changelog-master.yaml
+    change-log: classpath:db/changelog/liquibase/changelog-master.xml
+    contexts: core,performance,security,data
 
   # Security settings for tests
   security:

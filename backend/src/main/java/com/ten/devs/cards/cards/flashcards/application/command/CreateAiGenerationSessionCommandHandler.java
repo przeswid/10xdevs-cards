@@ -53,13 +53,19 @@ class CreateAiGenerationSessionCommandHandler implements Command.Handler<CreateA
                 sessionId
             );
 
+            // 3. Validate suggestions
+            if (suggestions == null) {
+                throw new IllegalArgumentException("AI service returned null suggestions");
+            }
+
             log.info("Generated {} flashcard suggestions for session {}",
                 suggestions.size(), sessionId);
 
-            // 3. Estimate cost (in production, get actual cost from API response)
+            // 4. Estimate cost (in production, get actual cost from API response)
             BigDecimal estimatedCost = aiService.estimateCost(command.inputText());
 
-            // 4. Create domain object with COMPLETED status and suggestions
+            // 5. Create domain object with COMPLETED status and suggestions
+            // This will throw IllegalArgumentException if suggestions is empty
             session = AiGenerationSession.createCompleted(
                 sessionId,
                 command.userId(),
@@ -69,7 +75,7 @@ class CreateAiGenerationSessionCommandHandler implements Command.Handler<CreateA
                 estimatedCost
             );
 
-            // 5. Save session ONCE with COMPLETED status and suggestions
+            // 6. Save session ONCE with COMPLETED status and suggestions
             // Suggestions are saved automatically as part of the aggregate
             session = sessionRepository.save(session);
 
