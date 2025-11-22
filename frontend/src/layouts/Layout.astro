@@ -1,11 +1,32 @@
 ---
 import "../styles/global.css";
+import { checkAuth } from '@/lib/server/auth';
 
 interface Props {
   title?: string;
+  showNavigation?: boolean;
+  requireAuth?: boolean;
 }
 
-const { title = "10x Astro Starter" } = Astro.props;
+const {
+  title = "10x Astro Starter",
+  showNavigation = true,
+  requireAuth = false
+} = Astro.props;
+
+// Check authentication if required
+if (requireAuth) {
+  const authResult = checkAuth(Astro.cookies, Astro.request);
+  if (!authResult.isAuthenticated) {
+    const currentPath = Astro.url.pathname;
+    return Astro.redirect(`/login?redirect=${encodeURIComponent(currentPath)}`);
+  }
+}
+
+// Check auth for navigation purposes
+const authResult = checkAuth(Astro.cookies, Astro.request);
+const isAuthenticated = authResult.isAuthenticated;
+const user = authResult.user;
 ---
 
 <!doctype html>
@@ -18,9 +39,31 @@ const { title = "10x Astro Starter" } = Astro.props;
     <title>{title}</title>
   </head>
   <body>
+    {showNavigation && (
+      <div id="app-header" data-authenticated={isAuthenticated} data-user={JSON.stringify(user)}></div>
+    )}
     <slot />
   </body>
 </html>
+
+{showNavigation && (
+  <script>
+    import { createRoot } from 'react-dom/client';
+    import React from 'react';
+    import { AuthProvider } from '@/lib/context/AuthContext';
+    import { AppHeader } from '@/components/navigation/AppHeader';
+
+    const container = document.getElementById('app-header');
+    if (container) {
+      const root = createRoot(container);
+      root.render(
+        React.createElement(AuthProvider, null,
+          React.createElement(AppHeader)
+        )
+      );
+    }
+  </script>
+)}
 
 <style>
   html,

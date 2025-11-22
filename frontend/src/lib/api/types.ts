@@ -169,3 +169,78 @@ export interface CharacterCounterProps {
   max: number;
   min?: number;
 }
+
+// ============================================================================
+// Authentication Types
+// ============================================================================
+
+/**
+ * Request body for POST /auth/register
+ */
+export interface RegisterRequest {
+  username: string;
+  password: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
+/**
+ * Response from POST /auth/register
+ */
+export interface RegisterResponse {
+  userId: string; // UUID of created user
+}
+
+/**
+ * Request body for POST /auth/login
+ */
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+/**
+ * Response from POST /auth/login
+ */
+export interface LoginResponse {
+  username: string;
+  accessToken: string;
+  expiresIn: number; // seconds until expiration
+}
+
+/**
+ * User profile data
+ */
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
+/**
+ * Validation result for individual field
+ */
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
+/**
+ * Form-level validation result
+ */
+export interface FormValidationResult {
+  isValid: boolean;
+  fieldErrors: Record<string, string[]>;
+}
+
+/**
+ * Auth check result for server-side validation
+ */
+export interface AuthCheckResult {
+  isAuthenticated: boolean;
+  user?: User;
+  error?: string;
+}
