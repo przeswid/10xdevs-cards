@@ -41,40 +41,42 @@ com.ten.devs.cards.cards/
 │   └── auth/
 │       ├── SecurityConfiguration.java
 │       └── JwtAuthenticationFilter.java
-└── user/                        # User bounded context
-    ├── domain/                  # Core business logic
-    │   ├── User.java           # Domain entity (MUTABLE, no getters)
-    │   ├── UserId.java         # Value object (immutable)
-    │   ├── UserSnapshot.java   # Snapshot DTO (immutable)
-    │   ├── Role.java           # Enum
-    │   ├── UserRepository.java # Repository interface
-    │   └── UserSpecification.java # Domain specifications
-    ├── application/             # Use cases/commands/queries
-    │   ├── command/            # Command handlers (CQRS)
-    │   │   ├── RegisterUserCommand.java
-    │   │   ├── RegisterUserCommandHandler.java
-    │   │   ├── LoginUserCommand.java
-    │   │   ├── LoginUserCommandHandler.java
-    │   │   └── JwtOperations.java
-    │   └── query/              # Query handlers (CQRS)
-    │       ├── GetUsersQuery.java
-    │       └── GetUsersQueryHandler.java
-    ├── infrastructure/          # Technical implementation
-    │   └── db/
-    │       ├── UserEntity.java     # JPA entity
-    │       ├── UserJpaRepository.java
-    │       ├── SqlDbUserRepository.java
-    │       ├── UserMapper.java     # MapStruct mapper
-    │       └── UserSpecificationAdapter.java
-    └── presentation/            # Web layer
-        ├── AuthenticationController.java
-        ├── UserController.java
-        ├── request/
-        │   ├── RegisterUserRequest.java
-        │   └── LoginRequest.java
-        └── response/
-            ├── GetUserResponse.java
-            └── LoginResponse.java
+├── user/                        # User bounded context
+│   ├── domain/                  # Core business logic
+│   │   ├── User.java           # Domain entity (MUTABLE, no getters)
+│   │   ├── UserId.java         # Value object (immutable)
+│   │   ├── UserSnapshot.java   # Snapshot DTO (immutable)
+│   │   ├── Role.java           # Enum
+│   │   ├── UserRepository.java # Repository interface
+│   │   └── UserSpecification.java # Domain specifications
+│   ├── application/             # Use cases/commands/queries
+│   │   ├── command/            # Command handlers (CQRS)
+│   │   └── query/              # Query handlers (CQRS)
+│   ├── infrastructure/          # Technical implementation
+│   │   └── db/
+│   │       ├── UserEntity.java     # JPA entity
+│   │       ├── UserJpaRepository.java
+│   │       ├── SqlDbUserRepository.java
+│   │       ├── UserMapper.java     # MapStruct mapper
+│   │       └── UserSpecificationAdapter.java
+│   └── presentation/            # Web layer
+│       ├── AuthenticationController.java
+│       └── UserController.java
+└── flashcards/                  # Flashcards bounded context
+    ├── domain/
+    │   ├── AiGenerationSession.java      # Domain entity for AI sessions
+    │   ├── AiGenerationSessionId.java    # Value object
+    │   ├── AiGenerationSessionSnapshot.java
+    │   ├── AiGenerationSessionStatus.java
+    │   ├── AiGenerationSessionRepository.java
+    │   ├── Flashcard.java                # Domain entity
+    │   ├── FlashcardSnapshot.java
+    │   ├── FlashcardRepository.java
+    │   ├── FlashcardSource.java          # Enum (AI/MANUAL)
+    │   └── FlashcardSuggestion.java      # Value object
+    ├── application/             # Commands and queries
+    ├── infrastructure/          # JPA entities, mappers, repositories
+    └── presentation/            # Controllers, requests, responses
 ```
 
 ### Key Architectural Patterns
@@ -105,8 +107,19 @@ com.ten.devs.cards.cards/
 - JWT authentication with custom filter chain
 - Stateless session management
 - CORS configured for `http://localhost:8005`
-- Public endpoints: `/users/register`, `/auth/login`
 - JWT secret and expiration configured in YAML
+
+**API Endpoints:**
+- Public endpoints:
+  - `POST /users/register` - User registration
+  - `POST /auth/login` - User authentication
+- Protected endpoints (require JWT):
+  - `GET /flashcards` - Get user's flashcards
+  - `POST /flashcards` - Create flashcard manually
+  - `POST /flashcards/generate` - Generate flashcards using AI
+  - `PUT /flashcards/{id}` - Update flashcard
+  - `DELETE /flashcards/{id}` - Delete flashcard
+  - `POST /study-sessions` - Start study session
 
 **Data Persistence:**
 - User table name: `users` (not `userEntities`)
