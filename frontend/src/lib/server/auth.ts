@@ -3,11 +3,11 @@
  * For Astro page guards and server-side rendering
  */
 
-import type { AstroCookies } from 'astro';
-import { jwtDecode } from 'jwt-decode';
-import type { AuthCheckResult, User } from '@/lib/api/types';
+import type { AstroCookies } from "astro";
+import { jwtDecode } from "jwt-decode";
+import type { AuthCheckResult, User } from "@/lib/api/types";
 
-const AUTH_COOKIE_NAME = 'auth_token';
+const AUTH_COOKIE_NAME = "auth_token";
 
 interface JWTPayload {
   sub: string; // User ID
@@ -37,7 +37,7 @@ export function checkAuth(cookies: AstroCookies, request: Request): AuthCheckRes
     if (!token) {
       return {
         isAuthenticated: false,
-        error: 'No authentication token found',
+        error: "No authentication token found",
       };
     }
 
@@ -48,7 +48,7 @@ export function checkAuth(cookies: AstroCookies, request: Request): AuthCheckRes
     if (payload.exp < currentTime) {
       return {
         isAuthenticated: false,
-        error: 'Token expired',
+        error: "Token expired",
       };
     }
 
@@ -56,9 +56,9 @@ export function checkAuth(cookies: AstroCookies, request: Request): AuthCheckRes
     const user: User = {
       id: payload.sub,
       username: payload.username,
-      email: payload.email || '',
-      firstName: payload.firstName || '',
-      lastName: payload.lastName || '',
+      email: payload.email || "",
+      firstName: payload.firstName || "",
+      lastName: payload.lastName || "",
     };
 
     return {
@@ -66,10 +66,10 @@ export function checkAuth(cookies: AstroCookies, request: Request): AuthCheckRes
       user,
     };
   } catch (error) {
-    console.error('Auth check failed:', error);
+    console.error("Auth check failed:", error);
     return {
       isAuthenticated: false,
-      error: 'Invalid token',
+      error: "Invalid token",
     };
   }
 }
@@ -84,10 +84,10 @@ export function setAuthCookie(cookies: AstroCookies, token: string, expiresIn: n
   const maxAge = expiresIn; // in seconds
 
   cookies.set(AUTH_COOKIE_NAME, token, {
-    path: '/',
+    path: "/",
     httpOnly: false, // Client needs to read it for React components
     secure: import.meta.env.PROD, // HTTPS only in production
-    sameSite: 'strict',
+    sameSite: "strict",
     maxAge,
   });
 }
@@ -98,7 +98,7 @@ export function setAuthCookie(cookies: AstroCookies, token: string, expiresIn: n
  */
 export function clearAuthCookie(cookies: AstroCookies): void {
   cookies.delete(AUTH_COOKIE_NAME, {
-    path: '/',
+    path: "/",
   });
 }
 

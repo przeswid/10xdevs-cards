@@ -3,9 +3,9 @@
  * Wraps LoginForm with AuthProvider for use in Astro pages
  */
 
-import React from 'react';
-import { AuthProvider } from '@/lib/context/AuthContext';
-import { LoginForm } from './LoginForm';
+import React from "react";
+import { AuthProvider } from "@/lib/context/AuthContext";
+import { LoginForm } from "./LoginForm";
 
 interface LoginFormWrapperProps {
   redirectTo?: string;

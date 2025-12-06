@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { createSession, getSession, getSuggestions, approveSession } from '@/lib/api/ai';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { createSession, getSession, getSuggestions, approveSession } from "@/lib/api/ai";
 import type {
   AISessionStatus,
   Suggestion,
   EditedContentMap,
   SelectedSuggestionsSet,
   ApproveSessionRequest,
-} from '@/lib/api/types';
-import { validateInputText, validateFlashcardContent } from '@/lib/validation/generation';
+} from "@/lib/api/types";
+import { validateInputText, validateFlashcardContent } from "@/lib/validation/generation";
 
 const POLLING_INTERVAL = 2500; // 2.5 seconds
 const MAX_POLLING_ATTEMPTS = 48; // 48 * 2.5s = 2 minutes
@@ -19,7 +19,7 @@ interface UseGenerationWorkflowReturn {
 
   // Session state
   sessionId: string | null;
-  sessionStatus: AISessionStatus | 'idle';
+  sessionStatus: AISessionStatus | "idle";
 
   // Suggestions state
   suggestions: Suggestion[];
@@ -30,7 +30,7 @@ interface UseGenerationWorkflowReturn {
   generateFlashcards: () => Promise<void>;
   toggleSelection: (suggestionId: string) => void;
   toggleAllSelections: () => void;
-  editSuggestion: (suggestionId: string, field: 'front' | 'back', value: string) => void;
+  editSuggestion: (suggestionId: string, field: "front" | "back", value: string) => void;
   saveApproved: () => Promise<boolean>; // Returns true on success
 
   // UI state
@@ -49,11 +49,11 @@ interface UseGenerationWorkflowReturn {
  */
 export const useGenerationWorkflow = (): UseGenerationWorkflowReturn => {
   // Input state
-  const [inputText, setInputText] = useState<string>('');
+  const [inputText, setInputText] = useState<string>("");
 
   // Session state
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [sessionStatus, setSessionStatus] = useState<AISessionStatus | 'idle'>('idle');
+  const [sessionStatus, setSessionStatus] = useState<AISessionStatus | "idle">("idle");
 
   // Suggestions state
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -95,15 +95,15 @@ export const useGenerationWorkflow = (): UseGenerationWorkflowReturn => {
           if (pollingAttemptsRef.current > MAX_POLLING_ATTEMPTS) {
             cleanupPolling();
             setIsGenerating(false);
-            setError('Generation is taking too long. Please try again.');
-            setSessionStatus('idle');
+            setError("Generation is taking too long. Please try again.");
+            setSessionStatus("idle");
             return;
           }
 
           const session = await getSession(currentSessionId);
           setSessionStatus(session.status);
 
-          if (session.status === 'COMPLETED') {
+          if (session.status === "COMPLETED") {
             // Pobierz sugestie
             const suggestionsResponse = await getSuggestions(currentSessionId);
             setSuggestions(suggestionsResponse.suggestions);
@@ -112,19 +112,19 @@ export const useGenerationWorkflow = (): UseGenerationWorkflowReturn => {
 
             // Check if no suggestions
             if (suggestionsResponse.suggestions.length === 0) {
-              setError('AI generated no suggestions. Try with different text.');
+              setError("AI generated no suggestions. Try with different text.");
             }
-          } else if (session.status === 'FAILED') {
+          } else if (session.status === "FAILED") {
             cleanupPolling();
             setIsGenerating(false);
-            setError('Generation failed. Please try again.');
+            setError("Generation failed. Please try again.");
           }
           // If PENDING - continue polling (interval will call this function again)
         } catch (err) {
-          console.error('Polling error:', err);
+          console.error("Polling error:", err);
           cleanupPolling();
           setIsGenerating(false);
-          setError('Error checking session status. Please try again.');
+          setError("Error checking session status. Please try again.");
         }
       };
 
@@ -144,14 +144,14 @@ export const useGenerationWorkflow = (): UseGenerationWorkflowReturn => {
     // Validation
     const validation = validateInputText(inputText);
     if (!validation.isValid) {
-      setError(validation.error || 'Invalid input text');
+      setError(validation.error || "Invalid input text");
       return;
     }
 
     try {
       setIsGenerating(true);
       setError(null);
-      setSessionStatus('idle');
+      setSessionStatus("idle");
       setSuggestions([]);
       setSelectedSuggestions(new Set());
       setEditedContent(new Map());
@@ -164,18 +164,18 @@ export const useGenerationWorkflow = (): UseGenerationWorkflowReturn => {
       // Start polling
       startPolling(response.sessionId);
     } catch (err: any) {
-      console.error('Error creating session:', err);
+      console.error("Error creating session:", err);
       setIsGenerating(false);
 
       // Error handling
       if (err.response?.status === 400) {
-        setError('Text must be between 1000 and 10000 characters');
+        setError("Text must be between 1000 and 10000 characters");
       } else if (err.response?.status === 422) {
-        setError('AI service is currently unavailable. Please try again later.');
+        setError("AI service is currently unavailable. Please try again later.");
       } else if (err.request && !err.response) {
-        setError('No connection to server. Check your internet connection.');
+        setError("No connection to server. Check your internet connection.");
       } else {
-        setError('An error occurred. Please try again.');
+        setError("An error occurred. Please try again.");
       }
     }
   }, [inputText, startPolling]);
@@ -213,12 +213,12 @@ export const useGenerationWorkflow = (): UseGenerationWorkflowReturn => {
    * Edycja pola sugestii
    */
   const editSuggestion = useCallback(
-    (suggestionId: string, field: 'front' | 'back', value: string) => {
+    (suggestionId: string, field: "front" | "back", value: string) => {
       setEditedContent((prev) => {
         const newMap = new Map(prev);
         const existing = newMap.get(suggestionId) || {
-          front: suggestions.find((s) => s.suggestionId === suggestionId)?.frontContent || '',
-          back: suggestions.find((s) => s.suggestionId === suggestionId)?.backContent || '',
+          front: suggestions.find((s) => s.suggestionId === suggestionId)?.frontContent || "",
+          back: suggestions.find((s) => s.suggestionId === suggestionId)?.backContent || "",
         };
 
         newMap.set(suggestionId, {
@@ -238,22 +238,22 @@ export const useGenerationWorkflow = (): UseGenerationWorkflowReturn => {
   const saveApproved = useCallback(async () => {
     // Validation
     if (selectedSuggestions.size === 0) {
-      setError('Select at least one flashcard');
+      setError("Select at least one flashcard");
       return;
     }
 
     if (!sessionId) {
-      setError('Session not initialized');
+      setError("Session not initialized");
       return;
     }
 
     // Validate edited content
     for (const [suggestionId, content] of editedContent.entries()) {
-      const frontValidation = validateFlashcardContent(content.front, 'Question');
-      const backValidation = validateFlashcardContent(content.back, 'Answer');
+      const frontValidation = validateFlashcardContent(content.front, "Question");
+      const backValidation = validateFlashcardContent(content.back, "Answer");
 
       if (!frontValidation.isValid || !backValidation.isValid) {
-        setError('All edited fields must be 1-1000 characters');
+        setError("All edited fields must be 1-1000 characters");
         return;
       }
     }
@@ -269,8 +269,8 @@ export const useGenerationWorkflow = (): UseGenerationWorkflowReturn => {
 
         return {
           suggestionId,
-          frontContent: edited?.front || original?.frontContent || '',
-          backContent: edited?.back || original?.backContent || '',
+          frontContent: edited?.front || original?.frontContent || "",
+          backContent: edited?.back || original?.backContent || "",
         };
       });
 
@@ -285,17 +285,17 @@ export const useGenerationWorkflow = (): UseGenerationWorkflowReturn => {
       setIsSaving(false);
       return true; // Indicate success
     } catch (err: any) {
-      console.error('Error saving approved suggestions:', err);
+      console.error("Error saving approved suggestions:", err);
       setIsSaving(false);
 
       if (err.response?.status === 400) {
-        setError('Invalid request. Check your selections.');
+        setError("Invalid request. Check your selections.");
       } else if (err.response?.status === 404) {
-        setError('Session not found.');
+        setError("Session not found.");
       } else if (err.request && !err.response) {
-        setError('No connection to server. Check your internet connection.');
+        setError("No connection to server. Check your internet connection.");
       } else {
-        setError('Error saving flashcards. Please try again.');
+        setError("Error saving flashcards. Please try again.");
       }
 
       return false; // Indicate failure

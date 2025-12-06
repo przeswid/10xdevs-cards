@@ -1,8 +1,8 @@
-import { toast } from 'sonner';
-import { useGeneration } from '@/lib/context/GenerationContext';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Button } from '@/components/ui/button';
-import { SuggestionCard } from './SuggestionCard';
+import { toast } from "sonner";
+import { useGeneration } from "@/lib/context/GenerationContext";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { SuggestionCard } from "./SuggestionCard";
 
 /**
  * Lista sugestii fiszek z możliwością selekcji i zapisu
@@ -33,11 +33,11 @@ export const SuggestionsList = () => {
 
     if (success) {
       // Show success toast
-      toast.success(`Saved ${selectedCount} flashcard${selectedCount > 1 ? 's' : ''} successfully!`);
+      toast.success(`Saved ${selectedCount} flashcard${selectedCount > 1 ? "s" : ""} successfully!`);
 
       // Redirect to /flashcards after short delay
       setTimeout(() => {
-        window.location.href = '/flashcards';
+        window.location.href = "/flashcards";
       }, 1500);
     }
   };
@@ -59,7 +59,7 @@ export const SuggestionsList = () => {
         </div>
 
         <div className="text-sm text-muted-foreground">
-          Selected <span className="font-medium text-foreground">{selectedCount}</span> of{' '}
+          Selected <span className="font-medium text-foreground">{selectedCount}</span> of{" "}
           <span className="font-medium text-foreground">{suggestions.length}</span>
         </div>
       </div>
@@ -83,7 +83,7 @@ export const SuggestionsList = () => {
           disabled={selectedCount === 0 || isSaving}
           className="min-w-[200px]"
         >
-          {isSaving ? 'Saving...' : `Save ${selectedCount} Selected`}
+          {isSaving ? "Saving..." : `Save ${selectedCount} Selected`}
         </Button>
       </div>
     </div>

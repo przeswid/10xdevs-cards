@@ -3,8 +3,8 @@
  * Client-side JWT decoding and validation
  */
 
-import { jwtDecode } from 'jwt-decode';
-import type { User } from '@/lib/api/types';
+import { jwtDecode } from "jwt-decode";
+import type { User } from "@/lib/api/types";
 
 /**
  * JWT payload interface
@@ -31,12 +31,12 @@ export function decodeToken(token: string): User | null {
     return {
       id: payload.sub,
       username: payload.username,
-      email: payload.email || '',
-      firstName: payload.firstName || '',
-      lastName: payload.lastName || '',
+      email: payload.email || "",
+      firstName: payload.firstName || "",
+      lastName: payload.lastName || "",
     };
   } catch (error) {
-    console.error('Failed to decode JWT:', error);
+    console.error("Failed to decode JWT:", error);
     return null;
   }
 }
@@ -53,7 +53,7 @@ export function isTokenExpired(token: string): boolean {
 
     return payload.exp < currentTime;
   } catch (error) {
-    console.error('Failed to check token expiration:', error);
+    console.error("Failed to check token expiration:", error);
     return true; // Assume expired if can't decode
   }
 }
@@ -68,7 +68,7 @@ export function getTokenExpiration(token: string): number | null {
     const payload = jwtDecode<JWTPayload>(token);
     return payload.exp * 1000; // Convert to milliseconds
   } catch (error) {
-    console.error('Failed to get token expiration:', error);
+    console.error("Failed to get token expiration:", error);
     return null;
   }
 }

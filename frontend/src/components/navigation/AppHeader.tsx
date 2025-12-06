@@ -3,9 +3,9 @@
  * Authentication-aware navigation bar
  */
 
-import React from 'react';
-import { useAuth } from '@/lib/context/AuthContext';
-import { Button } from '@/components/ui/button';
+import React from "react";
+import { useAuth } from "@/lib/context/AuthContext";
+import { Button } from "@/components/ui/button";
 
 interface AppHeaderProps {
   showAuthButtons?: boolean;
@@ -16,7 +16,7 @@ export function AppHeader({ showAuthButtons = true }: AppHeaderProps) {
 
   const handleLogout = async () => {
     await logout();
-    window.location.href = '/login';
+    window.location.href = "/login";
   };
 
   return (

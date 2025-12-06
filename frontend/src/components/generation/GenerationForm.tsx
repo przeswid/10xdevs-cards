@@ -1,10 +1,10 @@
-import { useState, type FormEvent } from 'react';
-import { useGeneration } from '@/lib/context/GenerationContext';
-import { validateInputText } from '@/lib/validation/generation';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { CharacterCounter } from './CharacterCounter';
-import { cn } from '@/lib/utils';
+import { useState, type FormEvent } from "react";
+import { useGeneration } from "@/lib/context/GenerationContext";
+import { validateInputText } from "@/lib/validation/generation";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { CharacterCounter } from "./CharacterCounter";
+import { cn } from "@/lib/utils";
 
 const MIN_CHARS = 1000;
 const MAX_CHARS = 10000;
@@ -41,7 +41,7 @@ export const GenerationForm = () => {
     // Final validation
     const validation = validateInputText(inputText);
     if (!validation.isValid) {
-      setValidationError(validation.error || 'Invalid input');
+      setValidationError(validation.error || "Invalid input");
       return;
     }
 
@@ -69,11 +69,11 @@ export const GenerationForm = () => {
           placeholder="Paste text here (minimum 1000 characters, maximum 10000 characters)..."
           disabled={isGenerating}
           className={cn(
-            'min-h-[300px] resize-y',
-            validationError && 'border-destructive focus-visible:ring-destructive'
+            "min-h-[300px] resize-y",
+            validationError && "border-destructive focus-visible:ring-destructive"
           )}
           aria-invalid={!!validationError}
-          aria-describedby={validationError ? 'input-error' : undefined}
+          aria-describedby={validationError ? "input-error" : undefined}
         />
 
         {validationError && (
@@ -84,7 +84,7 @@ export const GenerationForm = () => {
       </div>
 
       <Button type="submit" disabled={!isValid || isGenerating} className="w-full">
-        {isGenerating ? 'Generating...' : 'Generate Flashcards'}
+        {isGenerating ? "Generating..." : "Generate Flashcards"}
       </Button>
     </form>
   );

@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { Pencil, Save, X } from 'lucide-react';
-import { useGeneration } from '@/lib/context/GenerationContext';
-import { validateFlashcardContent } from '@/lib/validation/generation';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { CharacterCounter } from './CharacterCounter';
-import type { SuggestionCardProps } from '@/lib/api/types';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import { Pencil, Save, X } from "lucide-react";
+import { useGeneration } from "@/lib/context/GenerationContext";
+import { validateFlashcardContent } from "@/lib/validation/generation";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { CharacterCounter } from "./CharacterCounter";
+import type { SuggestionCardProps } from "@/lib/api/types";
+import { cn } from "@/lib/utils";
 
 const MAX_CHARS = 1000;
 
@@ -59,22 +59,22 @@ export const SuggestionCard = ({ suggestion, isSelected }: SuggestionCardProps) 
    */
   const handleSave = () => {
     // Validate both fields
-    const frontValidation = validateFlashcardContent(frontEdit, 'Question');
-    const backValidation = validateFlashcardContent(backEdit, 'Answer');
+    const frontValidation = validateFlashcardContent(frontEdit, "Question");
+    const backValidation = validateFlashcardContent(backEdit, "Answer");
 
     if (!frontValidation.isValid) {
-      setFrontError(frontValidation.error || 'Invalid question');
+      setFrontError(frontValidation.error || "Invalid question");
       return;
     }
 
     if (!backValidation.isValid) {
-      setBackError(backValidation.error || 'Invalid answer');
+      setBackError(backValidation.error || "Invalid answer");
       return;
     }
 
     // Save to context
-    editSuggestion(suggestion.suggestionId, 'front', frontEdit);
-    editSuggestion(suggestion.suggestionId, 'back', backEdit);
+    editSuggestion(suggestion.suggestionId, "front", frontEdit);
+    editSuggestion(suggestion.suggestionId, "back", backEdit);
 
     // Exit edit mode
     setIsEditing(false);
@@ -87,7 +87,7 @@ export const SuggestionCard = ({ suggestion, isSelected }: SuggestionCardProps) 
    */
   const handleFrontChange = (value: string) => {
     setFrontEdit(value);
-    const validation = validateFlashcardContent(value, 'Question');
+    const validation = validateFlashcardContent(value, "Question");
     setFrontError(validation.isValid ? null : validation.error || null);
   };
 
@@ -96,14 +96,14 @@ export const SuggestionCard = ({ suggestion, isSelected }: SuggestionCardProps) 
    */
   const handleBackChange = (value: string) => {
     setBackEdit(value);
-    const validation = validateFlashcardContent(value, 'Answer');
+    const validation = validateFlashcardContent(value, "Answer");
     setBackError(validation.isValid ? null : validation.error || null);
   };
 
   const canSave = !frontError && !backError && frontEdit.length > 0 && backEdit.length > 0;
 
   return (
-    <Card className={cn('relative', isSelected && 'ring-2 ring-primary')}>
+    <Card className={cn("relative", isSelected && "ring-2 ring-primary")}>
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
         <div className="flex items-center space-x-2">
           <Checkbox
@@ -131,9 +131,9 @@ export const SuggestionCard = ({ suggestion, isSelected }: SuggestionCardProps) 
               <Textarea
                 value={frontEdit}
                 onChange={(e) => handleFrontChange(e.target.value)}
-                className={cn('min-h-[100px]', frontError && 'border-destructive')}
+                className={cn("min-h-[100px]", frontError && "border-destructive")}
                 aria-invalid={!!frontError}
-                aria-describedby={frontError ? 'front-error' : undefined}
+                aria-describedby={frontError ? "front-error" : undefined}
               />
               {frontError && (
                 <p id="front-error" className="text-sm text-destructive" role="alert">
@@ -158,9 +158,9 @@ export const SuggestionCard = ({ suggestion, isSelected }: SuggestionCardProps) 
               <Textarea
                 value={backEdit}
                 onChange={(e) => handleBackChange(e.target.value)}
-                className={cn('min-h-[100px]', backError && 'border-destructive')}
+                className={cn("min-h-[100px]", backError && "border-destructive")}
                 aria-invalid={!!backError}
-                aria-describedby={backError ? 'back-error' : undefined}
+                aria-describedby={backError ? "back-error" : undefined}
               />
               {backError && (
                 <p id="back-error" className="text-sm text-destructive" role="alert">

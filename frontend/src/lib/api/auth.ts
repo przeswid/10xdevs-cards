@@ -3,13 +3,8 @@
  * Handles all authentication-related API calls
  */
 
-import { apiClient } from './client';
-import type {
-  RegisterRequest,
-  RegisterResponse,
-  LoginRequest,
-  LoginResponse,
-} from './types';
+import { apiClient } from "./client";
+import type { RegisterRequest, RegisterResponse, LoginRequest, LoginResponse } from "./types";
 
 export interface IAuthService {
   register(data: RegisterRequest): Promise<RegisterResponse>;
@@ -23,7 +18,7 @@ export interface IAuthService {
  */
 export async function register(data: RegisterRequest): Promise<RegisterResponse> {
   try {
-    const response = await apiClient.post<string>('/auth/register', data);
+    const response = await apiClient.post<string>("/auth/register", data);
 
     // Backend returns UUID string directly
     return {
@@ -32,13 +27,11 @@ export async function register(data: RegisterRequest): Promise<RegisterResponse>
   } catch (error: any) {
     // Re-throw with more context
     if (error.response) {
-      throw new Error(
-        error.response.data?.message || 'Registration failed. Please try again.'
-      );
+      throw new Error(error.response.data?.message || "Registration failed. Please try again.");
     } else if (error.request) {
-      throw new Error('Unable to connect to server. Please check your connection.');
+      throw new Error("Unable to connect to server. Please check your connection.");
     } else {
-      throw new Error('Registration failed. Please try again later.');
+      throw new Error("Registration failed. Please try again later.");
     }
   }
 }
@@ -49,7 +42,7 @@ export async function register(data: RegisterRequest): Promise<RegisterResponse>
  */
 export async function login(credentials: LoginRequest): Promise<LoginResponse> {
   try {
-    const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
+    const response = await apiClient.post<LoginResponse>("/auth/login", credentials);
     return response.data;
   } catch (error: any) {
     // Re-throw with more context
@@ -57,18 +50,16 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
       const status = error.response.status;
 
       if (status === 401) {
-        throw new Error('Invalid username or password. Please try again.');
+        throw new Error("Invalid username or password. Please try again.");
       } else if (status === 400) {
-        throw new Error('Invalid login data. Please check your inputs.');
+        throw new Error("Invalid login data. Please check your inputs.");
       } else {
-        throw new Error(
-          error.response.data?.message || 'Login failed. Please try again.'
-        );
+        throw new Error(error.response.data?.message || "Login failed. Please try again.");
       }
     } else if (error.request) {
-      throw new Error('Unable to connect to server. Please check your connection.');
+      throw new Error("Unable to connect to server. Please check your connection.");
     } else {
-      throw new Error('Login failed. Please try again later.');
+      throw new Error("Login failed. Please try again later.");
     }
   }
 }

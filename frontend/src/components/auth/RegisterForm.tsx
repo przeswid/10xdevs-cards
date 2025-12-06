@@ -3,24 +3,24 @@
  * User registration with client-side validation
  */
 
-import React, { useState } from 'react';
-import { useAuth } from '@/lib/context/AuthContext';
-import { validateRegistrationForm } from '@/lib/validation/auth';
-import type { RegisterRequest } from '@/lib/api/types';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert } from '@/components/ui/alert';
+import React, { useState } from "react";
+import { useAuth } from "@/lib/context/AuthContext";
+import { validateRegistrationForm } from "@/lib/validation/auth";
+import type { RegisterRequest } from "@/lib/api/types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert } from "@/components/ui/alert";
 
 export function RegisterForm() {
   const { register } = useAuth();
 
   const [formData, setFormData] = useState<RegisterRequest>({
-    username: '',
-    password: '',
-    email: '',
-    firstName: '',
-    lastName: '',
+    username: "",
+    password: "",
+    email: "",
+    firstName: "",
+    lastName: "",
   });
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
@@ -71,14 +71,14 @@ export function RegisterForm() {
 
     try {
       await register(formData);
-      setSuccessMessage('Registration successful! Redirecting...');
+      setSuccessMessage("Registration successful! Redirecting...");
 
       // Redirect to generate page after 1 second
       setTimeout(() => {
-        window.location.href = '/generate';
+        window.location.href = "/generate";
       }, 1000);
     } catch (error: any) {
-      setApiError(error.message || 'Registration failed. Please try again.');
+      setApiError(error.message || "Registration failed. Please try again.");
       setIsSubmitting(false);
     }
   };
@@ -107,9 +107,9 @@ export function RegisterForm() {
           onChange={handleChange}
           onBlur={handleBlur}
           disabled={isSubmitting}
-          className={fieldErrors.username ? 'border-red-500' : ''}
+          className={fieldErrors.username ? "border-red-500" : ""}
           aria-invalid={!!fieldErrors.username}
-          aria-describedby={fieldErrors.username ? 'username-error' : undefined}
+          aria-describedby={fieldErrors.username ? "username-error" : undefined}
         />
         {fieldErrors.username && (
           <p id="username-error" className="text-sm text-red-500">
@@ -128,9 +128,9 @@ export function RegisterForm() {
           onChange={handleChange}
           onBlur={handleBlur}
           disabled={isSubmitting}
-          className={fieldErrors.email ? 'border-red-500' : ''}
+          className={fieldErrors.email ? "border-red-500" : ""}
           aria-invalid={!!fieldErrors.email}
-          aria-describedby={fieldErrors.email ? 'email-error' : undefined}
+          aria-describedby={fieldErrors.email ? "email-error" : undefined}
         />
         {fieldErrors.email && (
           <p id="email-error" className="text-sm text-red-500">
@@ -149,9 +149,9 @@ export function RegisterForm() {
           onChange={handleChange}
           onBlur={handleBlur}
           disabled={isSubmitting}
-          className={fieldErrors.firstName ? 'border-red-500' : ''}
+          className={fieldErrors.firstName ? "border-red-500" : ""}
           aria-invalid={!!fieldErrors.firstName}
-          aria-describedby={fieldErrors.firstName ? 'firstName-error' : undefined}
+          aria-describedby={fieldErrors.firstName ? "firstName-error" : undefined}
         />
         {fieldErrors.firstName && (
           <p id="firstName-error" className="text-sm text-red-500">
@@ -170,9 +170,9 @@ export function RegisterForm() {
           onChange={handleChange}
           onBlur={handleBlur}
           disabled={isSubmitting}
-          className={fieldErrors.lastName ? 'border-red-500' : ''}
+          className={fieldErrors.lastName ? "border-red-500" : ""}
           aria-invalid={!!fieldErrors.lastName}
-          aria-describedby={fieldErrors.lastName ? 'lastName-error' : undefined}
+          aria-describedby={fieldErrors.lastName ? "lastName-error" : undefined}
         />
         {fieldErrors.lastName && (
           <p id="lastName-error" className="text-sm text-red-500">
@@ -191,9 +191,9 @@ export function RegisterForm() {
           onChange={handleChange}
           onBlur={handleBlur}
           disabled={isSubmitting}
-          className={fieldErrors.password ? 'border-red-500' : ''}
+          className={fieldErrors.password ? "border-red-500" : ""}
           aria-invalid={!!fieldErrors.password}
-          aria-describedby={fieldErrors.password ? 'password-error' : undefined}
+          aria-describedby={fieldErrors.password ? "password-error" : undefined}
         />
         {fieldErrors.password && (
           <p id="password-error" className="text-sm text-red-500">
@@ -206,11 +206,11 @@ export function RegisterForm() {
       </div>
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? 'Registering...' : 'Register'}
+        {isSubmitting ? "Registering..." : "Register"}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
-        Already have an account?{' '}
+        Already have an account?{" "}
         <a href="/login" className="text-primary hover:underline">
           Login
         </a>

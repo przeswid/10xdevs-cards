@@ -65,7 +65,7 @@ export interface ApprovedSuggestion {
 /**
  * Status sesji AI
  */
-export type AISessionStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
+export type AISessionStatus = "PENDING" | "COMPLETED" | "FAILED";
 
 // ============================================================================
 // Frontend ViewModel Types
@@ -103,7 +103,7 @@ export interface GenerationContextType {
 
   // Session state
   sessionId: string | null;
-  sessionStatus: AISessionStatus | 'idle';
+  sessionStatus: AISessionStatus | "idle";
 
   // Suggestions state
   suggestions: Suggestion[];
@@ -114,7 +114,7 @@ export interface GenerationContextType {
   generateFlashcards: () => Promise<void>;
   toggleSelection: (suggestionId: string) => void;
   toggleAllSelections: () => void;
-  editSuggestion: (suggestionId: string, field: 'front' | 'back', value: string) => void;
+  editSuggestion: (suggestionId: string, field: "front" | "back", value: string) => void;
   saveApproved: () => Promise<boolean>; // Returns true on success
 
   // UI state

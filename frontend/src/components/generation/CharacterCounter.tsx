@@ -1,5 +1,5 @@
-import { cn } from '@/lib/utils';
-import type { CharacterCounterProps } from '@/lib/api/types';
+import { cn } from "@/lib/utils";
+import type { CharacterCounterProps } from "@/lib/api/types";
 
 /**
  * Komponent licznika znaków
@@ -12,7 +12,7 @@ export const CharacterCounter = ({ current, max, min }: CharacterCounterProps) =
 
   return (
     <span
-      className={cn('text-sm font-medium', hasError ? 'text-destructive' : 'text-muted-foreground')}
+      className={cn("text-sm font-medium", hasError ? "text-destructive" : "text-muted-foreground")}
       aria-live="polite"
       aria-atomic="true"
     >

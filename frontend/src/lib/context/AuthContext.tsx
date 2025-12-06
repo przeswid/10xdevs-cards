@@ -3,11 +3,11 @@
  * Global authentication state management for React components
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { User, RegisterRequest, LoginRequest } from '@/lib/api/types';
-import * as authService from '@/lib/api/auth';
-import * as tokenService from '@/lib/services/tokenService';
-import { decodeToken } from '@/lib/utils/jwt';
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import type { User, RegisterRequest, LoginRequest } from "@/lib/api/types";
+import * as authService from "@/lib/api/auth";
+import * as tokenService from "@/lib/services/tokenService";
+import { decodeToken } from "@/lib/utils/jwt";
 
 interface AuthContextValue {
   user: User | null;
@@ -70,9 +70,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       tokenService.setToken(response.accessToken, response.expiresIn);
 
       // Set server-side cookie
-      await fetch('/api/auth/set-cookie', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      await fetch("/api/auth/set-cookie", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           token: response.accessToken,
           expiresIn: response.expiresIn,
@@ -87,7 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       setIsLoading(false);
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      setError(err.message || "Login failed");
       setIsLoading(false);
       throw err;
     }
@@ -96,24 +96,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
   /**
    * Register new user and auto-login
    */
-  const register = useCallback(async (userData: RegisterRequest) => {
-    try {
-      setError(null);
-      setIsLoading(true);
+  const register = useCallback(
+    async (userData: RegisterRequest) => {
+      try {
+        setError(null);
+        setIsLoading(true);
 
-      // Register user
-      await authService.register(userData);
+        // Register user
+        await authService.register(userData);
 
-      // Auto-login after successful registration
-      await login(userData.username, userData.password);
+        // Auto-login after successful registration
+        await login(userData.username, userData.password);
 
-      setIsLoading(false);
-    } catch (err: any) {
-      setError(err.message || 'Registration failed');
-      setIsLoading(false);
-      throw err;
-    }
-  }, [login]);
+        setIsLoading(false);
+      } catch (err: any) {
+        setError(err.message || "Registration failed");
+        setIsLoading(false);
+        throw err;
+      }
+    },
+    [login]
+  );
 
   /**
    * Logout user
@@ -123,8 +126,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     tokenService.clearToken();
 
     // Clear server-side cookie
-    await fetch('/api/auth/logout', {
-      method: 'POST',
+    await fetch("/api/auth/logout", {
+      method: "POST",
     });
 
     setUser(null);
@@ -159,7 +162,7 @@ export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext);
 
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
 
   return context;

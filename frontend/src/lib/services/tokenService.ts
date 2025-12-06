@@ -4,8 +4,8 @@
  * Uses localStorage for persistence across browser sessions
  */
 
-const TOKEN_KEY = 'auth_token';
-const TOKEN_EXPIRY_KEY = 'auth_token_expiry';
+const TOKEN_KEY = "auth_token";
+const TOKEN_EXPIRY_KEY = "auth_token_expiry";
 
 export interface ITokenService {
   setToken(token: string, expiresIn: number): void;

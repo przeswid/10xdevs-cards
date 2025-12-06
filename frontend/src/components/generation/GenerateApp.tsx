@@ -1,5 +1,5 @@
-import { GenerationProvider } from '@/lib/context/GenerationContext';
-import { GenerateView } from './GenerateView';
+import { GenerationProvider } from "@/lib/context/GenerationContext";
+import { GenerateView } from "./GenerateView";
 
 /**
  * Root komponent aplikacji generowania
