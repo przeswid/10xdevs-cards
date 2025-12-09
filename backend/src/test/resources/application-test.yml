@@ -27,6 +27,13 @@ spring:
   actuator:
     enabled: false
 
+# OpenRouter configuration for tests (overridden by @DynamicPropertySource)
+openrouter:
+  api-key: test-api-key-fallback
+  app-url: http://localhost:8080
+  app-name: "10xDevs Cards Test"
+  default-model: "openai/gpt-4o-mini"
+
 # Logging configuration for tests
 logging:
   level:

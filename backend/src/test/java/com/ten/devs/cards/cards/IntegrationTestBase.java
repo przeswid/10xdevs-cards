@@ -67,5 +67,10 @@ public abstract class IntegrationTestBase {
         registry.add("spring.datasource.url", postgreSQLContainer::getJdbcUrl);
         registry.add("spring.datasource.username", postgreSQLContainer::getUsername);
         registry.add("spring.datasource.password", postgreSQLContainer::getPassword);
+
+        // Configure OpenRouter with test values
+        registry.add("openrouter.api-key", () -> "test-api-key");
+        registry.add("openrouter.app-url", () -> "http://localhost:8080");
+        registry.add("openrouter.app-name", () -> "10xDevs Cards Test");
     }
 }

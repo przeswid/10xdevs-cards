@@ -30,8 +30,9 @@ Builds the application and runs the complete test suite.
 6. Upload JAR artifact (7-day retention)
 
 **Requirements:**
-- No external dependencies
+- No external dependencies or environment variables needed
 - Testcontainers handles PostgreSQL automatically
+- OpenRouter API key configured with test values in `IntegrationTestBase`
 - Tests run in parallel (4 threads)
 
 #### `coverage-report`
@@ -125,7 +126,17 @@ git push origin main  # Triggers CI automatically
 
 ## Environment Setup
 
-### Required Secrets (for CD)
+### CI Pipeline (No Secrets Required!)
+
+The CI pipeline **does not require any environment variables or secrets**. All configuration is handled automatically:
+
+- **Database**: Testcontainers provisions PostgreSQL automatically
+- **OpenRouter API**: Test values configured in `IntegrationTestBase.java`
+- **JWT Secret**: Test secret configured in `application-test.yml`
+
+This means the CI pipeline will work immediately after pushing code to GitHub.
+
+### Required Secrets (for CD only)
 
 When configuring deployment, add these secrets in GitHub Settings > Secrets and variables > Actions:
 
@@ -141,13 +152,15 @@ AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY
 ```
 
-**For Application:**
+**For Production Application (runtime):**
 ```
 DB_USERNAME
 DB_PASSWORD
 JWT_SECRET
 OPENROUTER_API_KEY
 ```
+
+**Note**: These are only needed for **deployment (CD pipeline)**, not for testing (CI pipeline).
 
 ### Environment Configuration
 
