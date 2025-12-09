@@ -19,34 +19,37 @@ Builds the application and runs the complete test suite.
 **Steps:**
 1. Checkout code
 2. Set up JDK 21 with Maven cache
-3. Generate OpenAPI code from `open-api.yaml`
-4. Compile project with Maven
-5. Run all tests (unit, integration, E2E) with Testcontainers
-6. Check JaCoCo code coverage (enforces 80% threshold)
-7. Upload coverage report as artifact (30-day retention)
-8. Package application as JAR
-9. Upload JAR artifact (7-day retention)
+3. Build and test with coverage - runs `./mvnw clean test -B` which:
+   - Generates OpenAPI code automatically
+   - Compiles the project
+   - Runs all tests (unit, integration, E2E) with Testcontainers
+   - Generates JaCoCo coverage report
+   - Enforces 80% coverage threshold
+4. Upload coverage report as artifact (30-day retention)
+5. Package application as JAR (skips tests)
+6. Upload JAR artifact (7-day retention)
 
 **Requirements:**
 - No external dependencies
 - Testcontainers handles PostgreSQL automatically
 - Tests run in parallel (4 threads)
 
-#### `code-quality`
-Runs architecture validation tests.
+#### `coverage-report`
+Generates coverage summary from test artifacts.
 
 **Steps:**
-1. Checkout code
-2. Set up JDK 21
-3. Run ArchUnit tests (DDD pattern validation)
-4. Download coverage report
-5. Generate coverage summary in GitHub step summary
+1. Download coverage report from `build-and-test` job
+2. Generate coverage summary in GitHub step summary
+3. Verify coverage report was generated successfully
+
+**Note:** This job runs even if tests fail (`if: always()`)
 
 **What Gets Tested:**
 - Unit tests (Mockito + AssertJ)
 - Integration tests (Spring Boot Test + Testcontainers)
 - E2E tests (RestAssured)
 - Architecture tests (ArchUnit - DDD/hexagonal architecture rules)
+- All tests run in a single Maven command for efficiency
 
 **Code Coverage:**
 - Minimum: 80% line and branch coverage
@@ -270,15 +273,16 @@ To force cache refresh:
 ### Workflow Performance
 
 Current timings (approximate):
-- `build-and-test`: 3-5 minutes
-- `code-quality`: 1-2 minutes
+- `build-and-test`: 3-5 minutes (includes all tests and packaging)
+- `coverage-report`: 10-20 seconds (downloads and summarizes coverage)
 - `deploy`: 2-4 minutes
 
 Optimization tips:
+- Single Maven command for build and test (reduced overhead)
 - Maven cache enabled (faster dependency downloads)
-- Parallel test execution (4 threads)
-- Testcontainers reuses containers when possible
-- Skip tests in package step (`-DskipTests`)
+- Parallel test execution (4 threads configured in pom.xml)
+- Testcontainers handles PostgreSQL automatically
+- Tests skipped during packaging step (`-DskipTests`)
 
 ## Support
 
