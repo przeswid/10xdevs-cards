@@ -5,99 +5,116 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 - `npm run dev` - Start development server on port 3000
-- `npm run build` - Build for production
+- `npm run build` - Build for production (outputs to `dist/`)
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Fix ESLint issues automatically
 - `npm run format` - Format code with Prettier
 
+### E2E Testing (Playwright)
+
+Requires the backend repository at `../10xdevs-cards-backend` with a Dockerfile.
+
+- `npm run test:e2e` - Full E2E test suite (starts Docker backend, runs tests, tears down)
+- `npm run test:e2e:run` - Run Playwright tests only (assumes backend is running)
+- `npm run test:e2e:backend:up` - Start Docker backend services (PostgreSQL + Spring Boot)
+- `npm run test:e2e:backend:down` - Stop and remove Docker backend services
+- `npx playwright test tests/us001-registration-happy-path.spec.ts` - Run a single test file
+
+Tests are located in `tests/` directory. The E2E setup uses Docker Compose to spin up PostgreSQL (port 5433) and Spring Boot backend (port 8080).
+
+### Unit Testing (Vitest)
+
+- `npm run test` - Run all unit tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Run tests with coverage report
+- `npx vitest src/lib/validation/auth.test.ts` - Run a single test file
+
+Unit tests are co-located with source files using `.test.ts` suffix in `src/lib/`. Test coverage includes validation schemas, services, and utilities.
+
 ## Tech Stack
 
-- **Astro 5** - Static site generation framework with SSR capabilities
+- **Astro 5** with Node adapter for SSR (`output: "server"`)
 - **React 19** - UI library for interactive components only
 - **TypeScript 5** - Type-safe JavaScript with strict configuration
-- **Tailwind CSS 4** - Utility-first CSS framework via Vite plugin
-- **Shadcn/ui** - Component library configured with New York style
-- **Node.js v22.14.0** - Required runtime version (see .nvmrc)
-
-## Project Origin
-
-This project is based on the **10x Astro Starter** template, customized to work with a Spring Boot backend instead of the template's default Supabase integration.
-
-## Backend
-
-This project is a **frontend-only application**. Backend functionality is provided by a separate Spring Boot application (not Supabase).
+- **Tailwind CSS 4** - Utility-first CSS via Vite plugin
+- **Shadcn/ui** - Component library (New York style, neutral base)
+- **Axios** - HTTP client for backend API communication
+- **Zod** - Schema validation
+- **Node.js v22.14.0** - Required runtime (see .nvmrc)
 
 ## Architecture
 
-This is an Astro project configured for static site generation with React integration. Key architectural decisions:
+This is an Astro SSR application that communicates with a separate Spring Boot backend.
 
-- **Static generation**: Uses Astro's static output mode (`output: "static"`)
-- **Hybrid rendering**: Astro components for static content, React for interactivity
-- **Path aliases**: `@/*` maps to `./src/*` for clean imports
-- **Component organization**: Shadcn/ui components in `src/components/ui/`
-- **API integration**: Frontend communicates with separate Spring Boot backend via API client services
+### Rendering Strategy
+- **Server-side rendering**: Uses `output: "server"` with Node adapter (standalone mode)
+- **Hybrid components**: Astro for pages/layouts, React for interactive client components
+- **Path aliases**: `@/*` maps to `./src/*`
 
-## Project Structure
+### API Client Architecture
 
-```
-src/
-├── components/          # UI components
-│   ├── ui/             # Shadcn/ui components
-│   └── *.astro         # Astro components
-├── layouts/            # Astro layouts
-├── pages/              # File-based routing
-├── lib/               # Utilities and API client services
-│   └── utils.ts       # cn() helper for class merging
-└── styles/            # Global styles
-```
+The frontend communicates with Spring Boot backend via Axios:
+
+- `src/lib/api/client.ts` - Axios instance with interceptors for auth tokens and error handling
+- `src/lib/api/auth.ts` - Authentication API calls (login, register)
+- `src/lib/api/ai.ts` - AI generation API calls
+- `src/lib/api/types.ts` - Shared TypeScript types for API requests/responses
+- `src/lib/services/tokenService.ts` - JWT token storage and retrieval
+- `src/lib/validation/` - Zod schemas for form validation
+
+Backend URL configured via `PUBLIC_API_URL` env variable (defaults to `http://localhost:8080`).
+
+### State Management
+
+React Context is used for global state:
+- `src/lib/context/AuthContext.tsx` - Authentication state
+- `src/lib/context/GenerationContext.tsx` - Flashcard generation workflow state
+
+### Component Organization
+
+- `src/components/ui/` - Shadcn/ui base components
+- `src/components/auth/` - Authentication forms (LoginForm, RegisterForm)
+- `src/components/generation/` - Flashcard generation UI
+- `src/components/navigation/` - App header and navigation
+- `src/lib/hooks/` - Custom React hooks
+
+### Pages
+
+- `/` - Landing page
+- `/login` - User login
+- `/register` - User registration
+- `/generate` - AI flashcard generation
+- `/flashcards` - Flashcard management
+
+### API Routes
+
+Server-side API routes in `src/pages/api/`:
+- `POST /api/auth/set-cookie` - Set auth cookie after login
+- `POST /api/auth/logout` - Clear auth cookie
 
 ## Code Conventions
 
 ### Component Usage
-- Use **Astro components** (.astro) for static content and layouts
-- Use **React components** (.tsx) only when interactivity is required
-- Extract API client logic and utilities into `src/lib/` services
+- Use **Astro components** (.astro) for pages and layouts
+- Use **React components** (.tsx) only when client-side interactivity is required
+- Never use Next.js directives like "use client"
 
 ### Styling
 - Use `cn()` utility from `@/lib/utils` for conditional class merging
-- Follow Tailwind 4 patterns with utility-first approach (imported via `@import "tailwindcss"`)
-- Leverage CSS custom properties for theming with oklch color space
 - Dark mode via custom variant: `@custom-variant dark (&:is(.dark *))`
-- Theme configuration in components.json (New York style, neutral base color)
 
-### TypeScript
-- Extends Astro's strict TypeScript configuration
-- JSX configured for React with automatic runtime
-- Use absolute imports with `@/*` paths
+### Error Handling
+- Prioritize early returns and guard clauses
+- Handle errors at the beginning of functions
+- Use Zod for input validation in API routes and forms
 
-### Linting
-- Comprehensive ESLint setup with React, Astro, and accessibility rules
-- React Compiler plugin enabled for optimization
-- Prettier integration for code formatting
-- Pre-commit hooks via husky and lint-staged
+### React Patterns
+- Functional components with hooks only
+- Extract reusable logic into custom hooks in `src/lib/hooks/`
+- Use React Context for cross-component state
 
-## Backend Integration
-
-This frontend communicates with a separate Spring Boot backend:
-- Create API client services in `src/lib/` for backend communication
-- Use proper TypeScript types for API requests/responses
-- Handle loading states and errors appropriately in components
-- Consider environment variables for backend API URL configuration
-
-## AI Development Support
-
-This project includes comprehensive AI assistant configurations:
-- **Cursor IDE rules**: Located in `.cursor/rules/` (8 specialized .mdc files)
-- **GitHub Copilot instructions**: Found in `.github/copilot-instructions.md`
-- **Windsurf configuration**: Available in `.windsurfrules`
-
-These files contain detailed guidelines for code patterns, accessibility, API integration, and framework-specific best practices.
-
-## Key Guidelines
-
-- Prioritize error handling with early returns and guard clauses
-- Use React hooks pattern (functional components only)
-- Never use Next.js directives like "use client"
-- Implement proper ARIA attributes for accessibility
-- Extract API client logic and utilities into services in `src/lib/`
+### API Routes
+- Use uppercase HTTP method names: `POST`, `GET`
+- Add `export const prerender = false` for API routes
+- Validate input with Zod schemas
