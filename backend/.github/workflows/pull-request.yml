@@ -107,7 +107,7 @@ jobs:
           cache: 'maven'
 
       - name: Run integration tests
-        run: ./mvnw verify -B -Djacoco.check.skip=true -DskipUnitTests
+        run: ./mvnw failsafe:integration-test failsafe:verify -B
         env:
           DB_USERNAME: postgres
           DB_PASSWORD: password
