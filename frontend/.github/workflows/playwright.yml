@@ -34,7 +34,14 @@ jobs:
 
     - name: Run Playwright tests
       working-directory: 10xdevs-cards-frontend
+      env:
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
       run: npx playwright test
+
+    - name: Show backend logs on failure
+      if: failure()
+      working-directory: 10xdevs-cards-frontend
+      run: docker compose -f docker-compose.e2e.yml logs backend
 
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
