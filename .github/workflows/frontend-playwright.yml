@@ -20,7 +20,7 @@ defaults:
 
 jobs:
   test:
-    name: Playwright E2E Tests
+    name: Playwright E2E Test
     timeout-minutes: 60
     runs-on: ubuntu-latest
 
