@@ -236,15 +236,21 @@ export const useGenerationWorkflow = (): UseGenerationWorkflowReturn => {
    * Zapisuje zatwierdzone sugestie jako fiszki
    */
   const saveApproved = useCallback(async () => {
+    console.log("[saveApproved] Starting save process");
+    console.log("[saveApproved] sessionId:", sessionId);
+    console.log("[saveApproved] selectedSuggestions:", selectedSuggestions.size);
+
     // Validation
     if (selectedSuggestions.size === 0) {
+      console.log("[saveApproved] Validation failed: No suggestions selected");
       setError("Select at least one flashcard");
-      return;
+      return false;
     }
 
     if (!sessionId) {
+      console.log("[saveApproved] Validation failed: No sessionId");
       setError("Session not initialized");
-      return;
+      return false;
     }
 
     // Validate edited content
@@ -254,45 +260,91 @@ export const useGenerationWorkflow = (): UseGenerationWorkflowReturn => {
 
       if (!frontValidation.isValid || !backValidation.isValid) {
         setError("All edited fields must be 1-1000 characters");
-        return;
+        return false;
       }
     }
 
-    try {
-      setIsSaving(true);
-      setError(null);
+    // Set saving state first, before try block
+    setIsSaving(true);
+    setError(null);
 
-      // Build request
-      const approvedSuggestions = Array.from(selectedSuggestions).map((suggestionId) => {
-        const original = suggestions.find((s) => s.suggestionId === suggestionId);
-        const edited = editedContent.get(suggestionId);
+    // Build request payload before try block to avoid any state-related issues
+    const approvedSuggestions = Array.from(selectedSuggestions).map((suggestionId) => {
+      const edited = editedContent.get(suggestionId);
 
+      // Only include frontContent and backContent if the suggestion was actually edited
+      // The backend expects these fields to be omitted for unedited suggestions
+      if (edited) {
         return {
           suggestionId,
-          frontContent: edited?.front || original?.frontContent || "",
-          backContent: edited?.back || original?.backContent || "",
+          frontContent: edited.front,
+          backContent: edited.back,
         };
+      } else {
+        return {
+          suggestionId,
+        };
+      }
+    });
+
+    const request: ApproveSessionRequest = {
+      approvedSuggestions,
+    };
+
+    console.log("[saveApproved] Request payload:", JSON.stringify(request, null, 2));
+    console.log("[saveApproved] Calling approveSession API...");
+
+    try {
+      // POST approve - use a local copy of sessionId to prevent race conditions
+      const currentSessionId = sessionId;
+      console.log("[saveApproved] About to call API with sessionId:", currentSessionId);
+
+      // TEMPORARY: Direct inline fetch to bypass all abstractions
+      const baseURL = "http://localhost:8080";
+      const url = `${baseURL}/ai/sessions/${currentSessionId}/approve`;
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+
+      console.log("[saveApproved] Making DIRECT inline fetch to:", url);
+      console.log("[saveApproved] Token exists:", !!token);
+      console.log("[saveApproved] Request body:", JSON.stringify(request));
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(request),
+        keepalive: true, // Keep connection alive even if page navigation starts
       });
 
-      const request: ApproveSessionRequest = {
-        approvedSuggestions,
-      };
+      console.log("[saveApproved] Fetch completed, status:", response.status);
 
-      // POST approve
-      await approveSession(sessionId, request);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("[saveApproved] Error response:", errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
 
-      // Success
-      setIsSaving(false);
+      console.log("[saveApproved] API call successful!");
+      // Don't call setIsSaving(false) here - we're navigating away anyway
+      // and the state change could cause issues with response handling
       return true; // Indicate success
     } catch (err: any) {
-      console.error("Error saving approved suggestions:", err);
+      console.error("[saveApproved] Error saving approved suggestions:", err);
+      console.error("[saveApproved] Error details:", {
+        message: err.message,
+        name: err.name,
+        stack: err.stack,
+      });
+
       setIsSaving(false);
 
-      if (err.response?.status === 400) {
+      if (err.message?.includes('HTTP 400')) {
         setError("Invalid request. Check your selections.");
-      } else if (err.response?.status === 404) {
+      } else if (err.message?.includes('HTTP 404')) {
         setError("Session not found.");
-      } else if (err.request && !err.response) {
+      } else if (err.name === 'TypeError' || err.message?.includes('fetch')) {
         setError("No connection to server. Check your internet connection.");
       } else {
         setError("Error saving flashcards. Please try again.");
@@ -300,6 +352,7 @@ export const useGenerationWorkflow = (): UseGenerationWorkflowReturn => {
 
       return false; // Indicate failure
     }
+    // Note: No finally block - don't reset isSaving on success since we navigate away
   }, [sessionId, selectedSuggestions, editedContent, suggestions]);
 
   /**

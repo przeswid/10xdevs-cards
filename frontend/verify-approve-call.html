@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verify Approve API Call</title>
+</head>
+<body>
+    <h1>Verify POST /ai/sessions/{sessionId}/approve</h1>
+    <p>Open browser DevTools Network tab, then click the button below:</p>
+    <button onclick="testApproveCall()">Test Approve API Call</button>
+    <div id="result"></div>
+
+    <script>
+        async function testApproveCall() {
+            const sessionId = 'test-session-id';
+            const url = `http://localhost:8080/ai/sessions/${sessionId}/approve`;
+            const payload = {
+                approvedSuggestions: [
+                    {
+                        suggestionId: 'test-suggestion-1',
+                        frontContent: 'Test Question',
+                        backContent: 'Test Answer'
+                    }
+                ]
+            };
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>Making request to: ' + url + '</p>';
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                resultDiv.innerHTML += '<p>Status: ' + response.status + '</p>';
+                resultDiv.innerHTML += '<p>Check Network tab for the POST request!</p>';
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML += '<p>Response: ' + JSON.stringify(data, null, 2) + '</p>';
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML += '<p>Error: ' + error + '</p>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML += '<p>Error: ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>

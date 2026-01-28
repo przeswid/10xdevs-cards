@@ -1,8 +1,10 @@
+import React from "react";
 import { toast } from "sonner";
 import { useGeneration } from "@/lib/context/GenerationContext";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { SuggestionCard } from "./SuggestionCard";
+import { getToken } from "@/lib/services/tokenService";
 
 /**
  * Lista sugestii fiszek z możliwością selekcji i zapisu
@@ -17,6 +19,7 @@ export const SuggestionsList = () => {
     isAllSelected,
     selectedCount,
     isSaving,
+    error,
   } = useGeneration();
 
   if (suggestions.length === 0) {
@@ -28,19 +31,64 @@ export const SuggestionsList = () => {
     );
   }
 
-  const handleSaveClick = async () => {
-    const success = await saveApproved();
+  const handleSaveClick = React.useCallback(
+    async (e: React.MouseEvent<HTMLButtonElement>) => {
+      // Prevent any default behavior
+      e.preventDefault();
+      e.stopPropagation();
 
-    if (success) {
-      // Show success toast
-      toast.success(`Saved ${selectedCount} flashcard${selectedCount > 1 ? "s" : ""} successfully!`);
+      console.log("[SuggestionsList] ========== SAVE BUTTON CLICKED ==========");
+      console.log("[SuggestionsList] Window location before:", window.location.href);
+      console.log("[SuggestionsList] Document readyState:", document.readyState);
 
-      // Redirect to /flashcards after short delay
-      setTimeout(() => {
-        window.location.href = "/flashcards";
-      }, 1500);
-    }
-  };
+      // Check token before attempting save
+      const token = getToken();
+      console.log("[SuggestionsList] Token check - exists:", !!token);
+      if (!token) {
+        console.error("[SuggestionsList] NO AUTH TOKEN - User should be redirected to login");
+        toast.error("Your session has expired. Please log in again.");
+        return;
+      }
+
+      // Double-click protection
+      if (isSaving) {
+        console.log("[SuggestionsList] Already saving, ignoring click");
+        return;
+      }
+
+      console.log("[SuggestionsList] Calling saveApproved()");
+
+      // Keep a reference to prevent garbage collection
+      const savePromise = saveApproved();
+      console.log("[SuggestionsList] Promise created:", savePromise);
+
+      try {
+        const success = await savePromise;
+        console.log("[SuggestionsList] saveApproved() completed, success:", success);
+        console.log("[SuggestionsList] Window location after:", window.location.href);
+
+        if (success) {
+          // Show success toast
+          toast.success(`Saved ${selectedCount} flashcard${selectedCount > 1 ? "s" : ""} successfully!`);
+
+          // Redirect to /flashcards after showing toast
+          console.log("[SuggestionsList] Starting redirect countdown...");
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+
+          console.log("[SuggestionsList] Executing navigation to /flashcards");
+          window.location.href = "/flashcards";
+        } else {
+          // Show error toast with specific error message if available
+          console.log("[SuggestionsList] Save failed, error:", error);
+          toast.error(error || "Failed to save flashcards. Please try again.");
+        }
+      } catch (err) {
+        console.error("[SuggestionsList] Unexpected error in handleSaveClick:", err);
+        toast.error("An unexpected error occurred. Please try again.");
+      }
+    },
+    [saveApproved, selectedCount, error, isSaving]
+  );
 
   return (
     <div className="space-y-6">
@@ -78,6 +126,7 @@ export const SuggestionsList = () => {
       {/* Footer - Save button */}
       <div className="flex justify-center border-t pt-6">
         <Button
+          type="button"
           size="lg"
           onClick={handleSaveClick}
           disabled={selectedCount === 0 || isSaving}

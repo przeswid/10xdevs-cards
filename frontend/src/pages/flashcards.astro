@@ -1,10 +1,11 @@
 ---
 import Layout from "../layouts/Layout.astro";
+import { FlashcardsList } from "../components/flashcards/FlashcardsList";
 ---
 
 <Layout title="Flashcards" requireAuth={true}>
   <div class="container mx-auto max-w-7xl px-4 py-8">
-    <h1 class="text-3xl font-bold tracking-tight mb-4">Your Flashcards</h1>
-    <p class="text-muted-foreground">Flashcards view - to be implemented</p>
+    <h1 class="text-3xl font-bold tracking-tight mb-8">Your Flashcards</h1>
+    <FlashcardsList client:load />
   </div>
 </Layout>

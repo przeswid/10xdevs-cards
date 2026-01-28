@@ -1,12 +1,12 @@
 package com.ten.devs.cards.cards.flashcards.application.command;
 
 import an.awesome.pipelinr.Command;
+import com.ten.devs.cards.cards.flashcards.domain.Flashcard;
+import com.ten.devs.cards.cards.flashcards.domain.FlashcardRepository;
+import com.ten.devs.cards.cards.flashcards.domain.FlashcardSnapshot;
 import com.ten.devs.cards.cards.flashcards.presentation.response.CreateFlashcardResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import java.time.Instant;
-import java.util.UUID;
 
 /**
  * Handler for CreateFlashcardCommand
@@ -16,20 +16,25 @@ import java.util.UUID;
 @RequiredArgsConstructor
 class CreateFlashcardCommandHandler implements Command.Handler<CreateFlashcardCommand, CreateFlashcardResponse> {
 
+    private final FlashcardRepository flashcardRepository;
+
     @Override
     public CreateFlashcardResponse handle(CreateFlashcardCommand command) {
-        // TODO: Replace with actual domain logic and repository save
-        // For now, return dummy data
+        Flashcard flashcard = Flashcard.createManual(
+                command.userId(),
+                command.frontContent(),
+                command.backContent()
+        );
 
-        UUID newFlashcardId = UUID.randomUUID();
-        Instant now = Instant.now();
+        Flashcard savedFlashcard = flashcardRepository.save(flashcard);
+        FlashcardSnapshot snapshot = savedFlashcard.toSnapshot();
 
         return new CreateFlashcardResponse(
-                newFlashcardId,
-                command.frontContent(),
-                command.backContent(),
-                "USER",  // Manually created flashcards have source = USER
-                now
+                snapshot.id(),
+                snapshot.frontContent(),
+                snapshot.backContent(),
+                snapshot.source().name(),
+                snapshot.createdAt()
         );
     }
 }

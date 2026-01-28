@@ -27,6 +27,13 @@ The application requires a PostgreSQL database. Use Docker Compose for local dev
 - Username: `postgres` (configurable via `DB_USERNAME` env var)
 - Password: `password` (configurable via `DB_PASSWORD` env var)
 
+### AI Service Setup
+For AI-powered flashcard generation, set the OpenRouter API key:
+```bash
+export OPENROUTER_API_KEY=your-api-key-here
+```
+Get your API key from [OpenRouter](https://openrouter.ai/). The app will start without it, but AI generation endpoints will fail.
+
 ## Architecture and Package Structure
 
 ### Domain-Driven Design Structure
@@ -111,15 +118,17 @@ com.ten.devs.cards.cards/
 
 **API Endpoints:**
 - Public endpoints:
-  - `POST /users/register` - User registration
+  - `POST /auth/register` - User registration
   - `POST /auth/login` - User authentication
 - Protected endpoints (require JWT):
   - `GET /flashcards` - Get user's flashcards
   - `POST /flashcards` - Create flashcard manually
-  - `POST /flashcards/generate` - Generate flashcards using AI
   - `PUT /flashcards/{id}` - Update flashcard
   - `DELETE /flashcards/{id}` - Delete flashcard
-  - `POST /study-sessions` - Start study session
+  - `POST /ai-generation/sessions` - Create AI generation session
+  - `GET /ai-generation/sessions/{id}` - Get AI session status
+  - `GET /ai-generation/sessions/{id}/suggestions` - Get AI-generated suggestions
+  - `POST /ai-generation/sessions/{id}/approve` - Approve suggestions as flashcards
 
 **Data Persistence:**
 - User table name: `users` (not `userEntities`)
@@ -627,6 +636,93 @@ public List<FlashcardSuggestion> getSuggestions() {
 - `AiGenerationSessionMapper.java` - Uses `domain.toSnapshot()`, includes `FlashcardSuggestionMapper`
 - Mapper declaration: `@Mapper(componentModel = "spring", uses = FlashcardSuggestionMapper.class)`
 
+## OpenAPI Code Generation
+
+The project uses OpenAPI Generator to create API interfaces from `src/main/resources/open-api.yaml`:
+
+- **Generated package:** `com.ten.devs.cards.cards.generated.api` (interfaces)
+- **Generated models:** `com.ten.devs.cards.cards.generated.model`
+- Controllers implement generated interfaces for compile-time contract validation
+- Run `./mvnw compile` to regenerate after spec changes
+
+## Resilience Patterns
+
+**Circuit Breaker (Resilience4j):**
+- Configured for OpenRouter AI service calls
+- Sliding window: 10 calls, 50% failure threshold
+- Wait duration in open state: 60 seconds
+
+**Rate Limiting (Bucket4j):**
+- Per-user rate limiting for AI generation endpoints
+
+**Retry Configuration:**
+- Max attempts: 3 with exponential backoff
+- Initial backoff: 1s, max: 10s, multiplier: 2.0
+
+## Testing
+
+### Test Infrastructure
+
+**Integration Tests:**
+- Extend `IntegrationTestBase` for PostgreSQL via Testcontainers
+- Uses `@ActiveProfiles("test")` with test configuration
+- Container reuse enabled for faster test execution
+
+**Test Patterns:**
+```java
+// Integration test
+class MyIntegrationTest extends IntegrationTestBase {
+    @Autowired
+    private MyRepository repository;
+    // Tests automatically get PostgreSQL container
+}
+
+// Unit test with Mockito
+@ExtendWith(MockitoExtension.class)
+class MyHandlerTest {
+    @Mock private Repository repository;
+    @InjectMocks private Handler handler;
+}
+```
+
+**Architecture Tests (ArchUnit):**
+- DDD layer dependency rules enforced
+- Hexagonal architecture boundaries validated
+- Run with: `./mvnw test -Dtest=ArchitectureTest`
+
+### Code Coverage
+
+- **Target:** 80% line and branch coverage
+- **Report:** `./mvnw jacoco:report` → `target/site/jacoco/index.html`
+- **Exclusions:** generated code, config, JPA entities
+
+## Environment Variables
+
+```bash
+# Database (optional, defaults provided)
+DB_USERNAME=postgres
+DB_PASSWORD=password
+
+# AI Service (required for AI features)
+OPENROUTER_API_KEY=your-api-key
+
+# Application URL (for OpenRouter headers)
+APP_URL=http://localhost:8080
+```
+
+## CI/CD Pipeline
+
+**CI (`ci.yml`):**
+- Triggers: Push/PR to main, manual dispatch
+- Runs all tests with Testcontainers (no external deps needed)
+- Generates coverage report, enforces 80% threshold
+- Creates deployable JAR artifact
+
+**CD (`cd.yml`):**
+- Manual dispatch only
+- Builds Docker image tagged with commit SHA
+- Deployment targets configurable (Docker Hub, AWS ECS, K8s)
+
 ## Development Notes
 
 - The project strictly separates domain logic from infrastructure concerns
@@ -634,3 +730,4 @@ public List<FlashcardSuggestion> getSuggestions() {
 - MapStruct generates type-safe mappings between layers
 - JWT authentication is fully implemented with proper security configuration
 - Use the provided Docker Compose for consistent database setup
+- OpenAPI spec is the source of truth for API contracts

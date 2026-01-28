@@ -12,7 +12,7 @@ const mockedJwtDecode = vi.mocked(jwtDecode);
 describe("JWT utilities", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // eslint-disable-next-line no-console
+
     vi.spyOn(console, "error").mockImplementation(() => undefined);
   });
 

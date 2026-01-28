@@ -1,6 +1,7 @@
 package com.ten.devs.cards.cards.flashcards.presentation;
 
 import an.awesome.pipelinr.Pipeline;
+import com.ten.devs.cards.cards.config.auth.SecurityContextUserProvider;
 import com.ten.devs.cards.cards.flashcards.application.command.*;
 import com.ten.devs.cards.cards.generated.api.AiGenerationApi;
 import com.ten.devs.cards.cards.generated.model.*;
@@ -10,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
 import java.time.ZoneOffset;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -25,13 +25,13 @@ import java.util.stream.Collectors;
 public class AiGenerationController implements AiGenerationApi {
 
     private final Pipeline cqsService;
+    private final SecurityContextUserProvider securityContextUserProvider;
 
     @Override
     public ResponseEntity<CreateAiSessionResponse> createAiSession(CreateAiSessionRequest createAiSessionRequest) {
         log.info("Create AI session request received: inputTextLength={}", createAiSessionRequest.getInputText().length());
 
-        // TODO: Extract userId from SecurityContext
-        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
+        UUID userId = securityContextUserProvider.getCurrentUserId();
 
         CreateAiGenerationSessionCommand command = CreateAiGenerationSessionCommand.builder()
                 .userId(userId)
@@ -53,8 +53,7 @@ public class AiGenerationController implements AiGenerationApi {
     public ResponseEntity<GetAiSessionResponse> getAiSession(UUID sessionId) {
         log.info("Get AI session request received: sessionId={}", sessionId);
 
-        // TODO: Extract userId from SecurityContext
-        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
+        UUID userId = securityContextUserProvider.getCurrentUserId();
 
         GetAiGenerationSessionCommand command = GetAiGenerationSessionCommand.builder()
                 .userId(userId)
@@ -86,8 +85,7 @@ public class AiGenerationController implements AiGenerationApi {
     public ResponseEntity<GetAiSuggestionsResponse> getAiSuggestions(UUID sessionId) {
         log.info("Get AI suggestions request received: sessionId={}", sessionId);
 
-        // TODO: Extract userId from SecurityContext
-        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
+        UUID userId = securityContextUserProvider.getCurrentUserId();
 
         GetAiSuggestionsCommand command = GetAiSuggestionsCommand.builder()
                 .userId(userId)
@@ -115,11 +113,11 @@ public class AiGenerationController implements AiGenerationApi {
             UUID sessionId,
             ApproveAiSuggestionsRequest approveAiSuggestionsRequest
     ) {
+        log.info("========== APPROVE ENDPOINT HIT ==========");
         log.info("Approve AI suggestions request received: sessionId={}, suggestionsCount={}",
                 sessionId, approveAiSuggestionsRequest.getApprovedSuggestions().size());
 
-        // TODO: Extract userId from SecurityContext
-        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
+        UUID userId = securityContextUserProvider.getCurrentUserId();
 
         // Convert generated request to domain request
         com.ten.devs.cards.cards.flashcards.presentation.request.ApproveAiSuggestionsRequest domainRequest =

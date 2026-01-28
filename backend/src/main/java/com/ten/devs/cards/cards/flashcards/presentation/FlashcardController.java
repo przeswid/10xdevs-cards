@@ -1,6 +1,7 @@
 package com.ten.devs.cards.cards.flashcards.presentation;
 
 import an.awesome.pipelinr.Pipeline;
+import com.ten.devs.cards.cards.config.auth.SecurityContextUserProvider;
 import com.ten.devs.cards.cards.flashcards.application.command.*;
 import com.ten.devs.cards.cards.generated.api.FlashcardsApi;
 import com.ten.devs.cards.cards.generated.model.*;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 public class FlashcardController implements FlashcardsApi {
 
     private final Pipeline cqsService;
+    private final SecurityContextUserProvider securityContextUserProvider;
 
     @Override
     public ResponseEntity<GetFlashcardsResponse> getFlashcards(
@@ -35,8 +37,7 @@ public class FlashcardController implements FlashcardsApi {
         log.info("Get flashcards request received: page={}, size={}, sort={}, source={}",
                 page, size, sort, source);
 
-        // TODO: Extract userId from SecurityContext
-        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
+        UUID userId = securityContextUserProvider.getCurrentUserId();
 
         GetFlashcardsCommand command = GetFlashcardsCommand.builder()
                 .userId(userId)
@@ -76,8 +77,7 @@ public class FlashcardController implements FlashcardsApi {
         log.info("Create flashcard request received: frontContentLength={}, backContentLength={}",
                 createFlashcardRequest.getFrontContent().length(), createFlashcardRequest.getBackContent().length());
 
-        // TODO: Extract userId from SecurityContext
-        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
+        UUID userId = securityContextUserProvider.getCurrentUserId();
 
         CreateFlashcardCommand command = CreateFlashcardCommand.builder()
                 .userId(userId)
@@ -103,8 +103,7 @@ public class FlashcardController implements FlashcardsApi {
         log.info("Update flashcard request received: flashcardId={}, frontContentLength={}, backContentLength={}",
                 flashcardId, updateFlashcardRequest.getFrontContent().length(), updateFlashcardRequest.getBackContent().length());
 
-        // TODO: Extract userId from SecurityContext
-        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
+        UUID userId = securityContextUserProvider.getCurrentUserId();
 
         UpdateFlashcardCommand command = UpdateFlashcardCommand.builder()
                 .userId(userId)
@@ -130,8 +129,7 @@ public class FlashcardController implements FlashcardsApi {
     public ResponseEntity<Void> deleteFlashcard(UUID flashcardId) {
         log.info("Delete flashcard request received: flashcardId={}", flashcardId);
 
-        // TODO: Extract userId from SecurityContext
-        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001"); // Dummy user ID
+        UUID userId = securityContextUserProvider.getCurrentUserId();
 
         DeleteFlashcardCommand command = DeleteFlashcardCommand.builder()
                 .userId(userId)

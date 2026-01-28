@@ -57,9 +57,9 @@ export interface ApproveSessionRequest {
 }
 
 export interface ApprovedSuggestion {
-  suggestionId: string; // UUID
-  frontContent: string; // Optional - if edited, max 1000 chars
-  backContent: string; // Optional - if edited, max 1000 chars
+  suggestionId: string; // UUID - always required
+  frontContent?: string; // Optional - only include if edited, max 1000 chars
+  backContent?: string; // Optional - only include if edited, max 1000 chars
 }
 
 /**
@@ -168,6 +168,55 @@ export interface CharacterCounterProps {
   current: number;
   max: number;
   min?: number;
+}
+
+// ============================================================================
+// Flashcard Types
+// ============================================================================
+
+/**
+ * Flashcard source enum
+ */
+export type FlashcardSource = "AI" | "AI_USER" | "USER";
+
+/**
+ * Individual flashcard summary
+ */
+export interface FlashcardSummary {
+  flashcardId: string; // UUID
+  frontContent: string;
+  backContent: string;
+  source: FlashcardSource;
+  createdAt: string; // ISO 8601
+  updatedAt: string; // ISO 8601
+}
+
+/**
+ * Pagination info
+ */
+export interface PageInfo {
+  number: number; // Current page (0-based)
+  size: number; // Items per page
+  totalElements: number; // Total number of elements
+  totalPages: number; // Total number of pages
+}
+
+/**
+ * Response from GET /flashcards
+ */
+export interface GetFlashcardsResponse {
+  content: FlashcardSummary[];
+  page: PageInfo;
+}
+
+/**
+ * Query parameters for GET /flashcards
+ */
+export interface GetFlashcardsParams {
+  page?: number; // 0-based
+  size?: number; // 1-100
+  sort?: string; // e.g., "createdAt,desc"
+  source?: FlashcardSource;
 }
 
 // ============================================================================
