@@ -1,0 +1,51 @@
+name: Playwright Tests
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout frontend
+      uses: actions/checkout@v4
+      with:
+        path: 10xdevs-cards-frontend
+
+    - name: Checkout backend
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ github.repository_owner }}/10xdevs-cards-backend
+        path: 10xdevs-cards-backend
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+
+    - name: Install dependencies
+      working-directory: 10xdevs-cards-frontend
+      run: npm install
+
+    - name: Install Playwright Browsers
+      working-directory: 10xdevs-cards-frontend
+      run: npx playwright install --with-deps
+
+    - name: Run Playwright tests
+      working-directory: 10xdevs-cards-frontend
+      env:
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      run: npx playwright test
+
+    - name: Show backend logs on failure
+      if: failure()
+      working-directory: 10xdevs-cards-frontend
+      run: docker compose -f docker-compose.e2e.yml logs backend
+
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: playwright-report
+        path: 10xdevs-cards-frontend/playwright-report/
+        retention-days: 30

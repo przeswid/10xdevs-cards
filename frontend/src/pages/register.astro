@@ -1,0 +1,24 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { checkAuth } from "@/lib/server/auth";
+import { RegisterFormWrapper } from "@/components/auth/RegisterFormWrapper";
+
+// Check if user is already authenticated
+const authResult = checkAuth(Astro.cookies, Astro.request);
+if (authResult.isAuthenticated) {
+  return Astro.redirect("/generate");
+}
+---
+
+<Layout title="Register - 10x Cards" showNavigation={false}>
+  <div class="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
+    <div class="w-full max-w-md space-y-8">
+      <div class="text-center">
+        <h1 class="text-3xl font-bold tracking-tight">Create an account</h1>
+        <p class="mt-2 text-muted-foreground">Start generating flashcards with AI</p>
+      </div>
+
+      <RegisterFormWrapper client:only="react" />
+    </div>
+  </div>
+</Layout>

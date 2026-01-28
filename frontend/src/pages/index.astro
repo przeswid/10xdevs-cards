@@ -1,0 +1,15 @@
+---
+import Welcome from "../components/Welcome.astro";
+import Layout from "../layouts/Layout.astro";
+import { checkAuth } from "@/lib/server/auth";
+
+// Redirect authenticated users to generate page
+const authResult = checkAuth(Astro.cookies, Astro.request);
+if (authResult.isAuthenticated) {
+  return Astro.redirect("/generate");
+}
+---
+
+<Layout>
+  <Welcome />
+</Layout>

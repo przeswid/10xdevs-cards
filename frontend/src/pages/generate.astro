@@ -1,0 +1,10 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { GenerateApp } from "../components/generation/GenerateApp";
+import { Toaster } from "../components/ui/sonner";
+---
+
+<Layout title="Generate Flashcards - AI Generator" requireAuth={true}>
+  <GenerateApp client:only="react" />
+  <Toaster client:only="react" />
+</Layout>

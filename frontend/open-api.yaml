@@ -1,0 +1,841 @@
+openapi: 3.0.3
+info:
+  title: 10xDevs Cards API
+  description: Backend API for AI-powered flashcard management system
+  version: 1.0.0
+  contact:
+    name: 10xDevs Team
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: Authentication
+    description: User authentication and registration endpoints
+  - name: Users
+    description: User management endpoints
+  - name: Flashcards
+    description: Manual flashcard CRUD operations
+  - name: AI Generation
+    description: AI-powered flashcard generation workflow
+
+security:
+  - BearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: Creates a new user account with provided credentials
+      operationId: register
+      security: []  # Public endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUserRequest'
+      responses:
+        '200':
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+                type: string
+                format: uuid
+                description: ID of the newly created user
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Authenticate user
+      description: Authenticates user and returns JWT access token
+      operationId: authenticate
+      security: []  # Public endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/:
+    get:
+      tags:
+        - Users
+      summary: Get all users
+      description: Retrieves a list of all registered users
+      operationId: allUsers
+      responses:
+        '200':
+          description: List of users retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GetUserResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /flashcards:
+    get:
+      tags:
+        - Flashcards
+      summary: List user's flashcards
+      description: Retrieves paginated list of user's flashcards with optional filtering
+      operationId: getFlashcards
+      parameters:
+        - name: page
+          in: query
+          description: Page number (0-based)
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: sort
+          in: query
+          description: Sort criteria (e.g., "createdAt,desc")
+          required: false
+          schema:
+            type: string
+            default: "createdAt,desc"
+        - name: source
+          in: query
+          description: Filter by flashcard source (AI, AI_USER, USER)
+          required: false
+          schema:
+            type: string
+            enum: [AI, AI_USER, USER]
+      responses:
+        '200':
+          description: Flashcards retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFlashcardsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Flashcards
+      summary: Create a new flashcard
+      description: Creates a new manual flashcard
+      operationId: createFlashcard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFlashcardRequest'
+      responses:
+        '201':
+          description: Flashcard created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateFlashcardResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /flashcards/{flashcardId}:
+    put:
+      tags:
+        - Flashcards
+      summary: Update existing flashcard
+      description: Updates content of an existing flashcard
+      operationId: updateFlashcard
+      parameters:
+        - name: flashcardId
+          in: path
+          description: ID of the flashcard to update
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFlashcardRequest'
+      responses:
+        '200':
+          description: Flashcard updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateFlashcardResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Flashcard not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Flashcards
+      summary: Delete flashcard
+      description: Permanently deletes a flashcard
+      operationId: deleteFlashcard
+      parameters:
+        - name: flashcardId
+          in: path
+          description: ID of the flashcard to delete
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Flashcard deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Flashcard not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ai/sessions:
+    post:
+      tags:
+        - AI Generation
+      summary: Start AI flashcard generation session
+      description: Creates a new AI generation session and initiates flashcard generation
+      operationId: createAiSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAiSessionRequest'
+      responses:
+        '201':
+          description: AI session created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAiSessionResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ai/sessions/{sessionId}:
+    get:
+      tags:
+        - AI Generation
+      summary: Get AI generation session status
+      description: Retrieves the current status and metrics of an AI generation session
+      operationId: getAiSession
+      parameters:
+        - name: sessionId
+          in: path
+          description: ID of the AI generation session
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Session status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAiSessionResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ai/sessions/{sessionId}/suggestions:
+    get:
+      tags:
+        - AI Generation
+      summary: Retrieve AI-generated flashcard suggestions
+      description: Gets the list of flashcard suggestions generated by AI for a completed session
+      operationId: getAiSuggestions
+      parameters:
+        - name: sessionId
+          in: path
+          description: ID of the AI generation session
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Suggestions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAiSuggestionsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Session not found or not completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ai/sessions/{sessionId}/approve:
+    post:
+      tags:
+        - AI Generation
+      summary: Approve AI-generated flashcard suggestions
+      description: Approves selected AI suggestions and creates flashcards from them
+      operationId: approveAiSuggestions
+      parameters:
+        - name: sessionId
+          in: path
+          description: ID of the AI generation session
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApproveAiSuggestionsRequest'
+      responses:
+        '201':
+          description: Suggestions approved and flashcards created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApproveAiSuggestionsResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT authentication token obtained from /auth/login
+
+  schemas:
+    # Authentication Schemas
+    RegisterUserRequest:
+      type: object
+      required:
+        - username
+        - password
+        - email
+        - firstName
+        - lastName
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 100
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 50
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 50
+
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    LoginResponse:
+      type: object
+      required:
+        - username
+        - accessToken
+        - expiresIn
+      properties:
+        username:
+          type: string
+        accessToken:
+          type: string
+          description: JWT access token
+        expiresIn:
+          type: integer
+          format: int64
+          description: Token expiration time in seconds
+
+    # User Schemas
+    GetUserResponse:
+      type: object
+      required:
+        - id
+        - username
+        - email
+        - firstName
+        - lastName
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+
+    # Flashcard Schemas
+    CreateFlashcardRequest:
+      type: object
+      required:
+        - frontContent
+        - backContent
+      properties:
+        frontContent:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: Front side content of the flashcard
+        backContent:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: Back side content of the flashcard
+
+    UpdateFlashcardRequest:
+      type: object
+      required:
+        - frontContent
+        - backContent
+      properties:
+        frontContent:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: Updated front side content
+        backContent:
+          type: string
+          minLength: 1
+          maxLength: 1000
+          description: Updated back side content
+
+    CreateFlashcardResponse:
+      type: object
+      required:
+        - flashcardId
+        - frontContent
+        - backContent
+        - source
+        - createdAt
+      properties:
+        flashcardId:
+          type: string
+          format: uuid
+        frontContent:
+          type: string
+        backContent:
+          type: string
+        source:
+          type: string
+          enum: [AI, AI_USER, USER]
+          description: Source of the flashcard
+        createdAt:
+          type: string
+          format: date-time
+
+    UpdateFlashcardResponse:
+      type: object
+      required:
+        - flashcardId
+        - frontContent
+        - backContent
+        - source
+        - updatedAt
+      properties:
+        flashcardId:
+          type: string
+          format: uuid
+        frontContent:
+          type: string
+        backContent:
+          type: string
+        source:
+          type: string
+          enum: [AI, AI_USER, USER]
+          description: Source of the flashcard
+        updatedAt:
+          type: string
+          format: date-time
+
+    GetFlashcardsResponse:
+      type: object
+      required:
+        - content
+        - page
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/FlashcardSummary'
+        page:
+          $ref: '#/components/schemas/PageInfo'
+
+    FlashcardSummary:
+      type: object
+      required:
+        - flashcardId
+        - frontContent
+        - backContent
+        - source
+        - createdAt
+        - updatedAt
+      properties:
+        flashcardId:
+          type: string
+          format: uuid
+        frontContent:
+          type: string
+        backContent:
+          type: string
+        source:
+          type: string
+          enum: [AI, AI_USER, USER]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PageInfo:
+      type: object
+      required:
+        - number
+        - size
+        - totalElements
+        - totalPages
+      properties:
+        number:
+          type: integer
+          format: int32
+          description: Current page number (0-based)
+        size:
+          type: integer
+          format: int32
+          description: Number of items per page
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of elements
+        totalPages:
+          type: integer
+          format: int32
+          description: Total number of pages
+
+    # AI Generation Schemas
+    CreateAiSessionRequest:
+      type: object
+      required:
+        - inputText
+      properties:
+        inputText:
+          type: string
+          minLength: 1000
+          maxLength: 10000
+          description: Input text for AI to generate flashcards from
+
+    CreateAiSessionResponse:
+      type: object
+      required:
+        - sessionId
+        - status
+        - createdAt
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [PENDING, COMPLETED, FAILED]
+          description: Current status of the generation session
+        createdAt:
+          type: string
+          format: date-time
+
+    GetAiSessionResponse:
+      type: object
+      required:
+        - sessionId
+        - status
+        - generatedCount
+        - acceptedCount
+        - createdAt
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [PENDING, COMPLETED, FAILED]
+          description: Current status of the generation session
+        generatedCount:
+          type: integer
+          format: int32
+          description: Number of suggestions generated by AI
+        acceptedCount:
+          type: integer
+          format: int32
+          description: Number of suggestions approved by user
+        aiModel:
+          type: string
+          nullable: true
+          description: AI model used for generation
+        apiCost:
+          type: number
+          format: double
+          nullable: true
+          description: API cost for the generation
+        createdAt:
+          type: string
+          format: date-time
+
+    GetAiSuggestionsResponse:
+      type: object
+      required:
+        - sessionId
+        - status
+        - suggestions
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [PENDING, COMPLETED, FAILED]
+          description: Session must be COMPLETED for suggestions to be available
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FlashcardSuggestion'
+
+    FlashcardSuggestion:
+      type: object
+      required:
+        - suggestionId
+        - frontContent
+        - backContent
+      properties:
+        suggestionId:
+          type: string
+          format: uuid
+        frontContent:
+          type: string
+          maxLength: 1000
+          description: AI-generated front content
+        backContent:
+          type: string
+          maxLength: 1000
+          description: AI-generated back content
+
+    ApproveAiSuggestionsRequest:
+      type: object
+      required:
+        - approvedSuggestions
+      properties:
+        approvedSuggestions:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ApprovedSuggestion'
+
+    ApprovedSuggestion:
+      type: object
+      required:
+        - suggestionId
+      properties:
+        suggestionId:
+          type: string
+          format: uuid
+          description: ID of the suggestion to approve
+        frontContent:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: Optional - edited front content
+        backContent:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: Optional - edited back content
+
+    ApproveAiSuggestionsResponse:
+      type: object
+      required:
+        - createdFlashcards
+      properties:
+        createdFlashcards:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreatedFlashcard'
+
+    CreatedFlashcard:
+      type: object
+      required:
+        - flashcardId
+        - frontContent
+        - backContent
+        - source
+      properties:
+        flashcardId:
+          type: string
+          format: uuid
+        frontContent:
+          type: string
+        backContent:
+          type: string
+        source:
+          type: string
+          enum: [AI, AI_USER]
+          description: AI if not edited, AI_USER if edited during approval
+
+    # Error Schema
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+          format: int32
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
