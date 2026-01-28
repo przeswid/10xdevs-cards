@@ -1,7 +1,7 @@
-name: CD Pipeline
+name: Backend CD Pipeline
 
 on:
-  workflow_dispatch:  # Manual trigger only
+  workflow_dispatch:
     inputs:
       environment:
         description: 'Deployment environment'
@@ -11,6 +11,10 @@ on:
         options:
           - staging
           - production
+
+defaults:
+  run:
+    working-directory: backend
 
 jobs:
   deploy:
@@ -28,6 +32,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
+          cache-dependency-path: backend/pom.xml
 
       - name: Build application
         run: ./mvnw clean package -DskipTests -B

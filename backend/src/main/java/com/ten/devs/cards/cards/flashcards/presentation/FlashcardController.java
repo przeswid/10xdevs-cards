@@ -77,6 +77,7 @@ public class FlashcardController implements FlashcardsApi {
         log.info("Create flashcard request received: frontContentLength={}, backContentLength={}",
                 createFlashcardRequest.getFrontContent().length(), createFlashcardRequest.getBackContent().length());
 
+
         UUID userId = securityContextUserProvider.getCurrentUserId();
 
         CreateFlashcardCommand command = CreateFlashcardCommand.builder()
