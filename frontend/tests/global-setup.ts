@@ -24,6 +24,18 @@ async function globalSetup() {
     console.log("✅ Docker services started and healthy");
   } catch (error) {
     console.error("❌ Error during setup:", error);
+
+    // Print backend logs to help diagnose the failure
+    try {
+      console.log("\n📋 Backend container logs:");
+      const { stdout: logs } = await execAsync(
+        "docker compose -f docker-compose.e2e.yml logs backend"
+      );
+      console.log(logs);
+    } catch {
+      console.log("Could not retrieve backend logs");
+    }
+
     throw error;
   }
 }

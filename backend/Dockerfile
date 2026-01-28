@@ -28,11 +28,14 @@ WORKDIR /app
 # Install wget for healthcheck
 RUN apk add --no-cache wget
 
-# Copy the built JAR from builder stage
-COPY --from=builder /app/target/*.jar app.jar
+# Copy the built JAR from builder stage (specific to avoid copying wrong JAR)
+COPY --from=builder /app/target/cards-*.jar app.jar
 
 # Expose port
 EXPOSE 8080
 
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# JVM options for containers
+ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+
+# Run the application with container-aware settings
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
