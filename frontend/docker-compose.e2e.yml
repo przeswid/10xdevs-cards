@@ -20,8 +20,7 @@ services:
   # Spring Boot Backend Service for E2E tests
   backend:
     build:
-      # CRITICAL: This path must be updated to point to the backend repository
-      context: ../10xdevs-cards-backend
+      context: ../backend
       dockerfile: Dockerfile
     container_name: e2e_backend
     depends_on:
