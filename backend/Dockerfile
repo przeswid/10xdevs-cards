@@ -3,6 +3,9 @@ FROM amazoncorretto:21-alpine AS builder
 
 WORKDIR /app
 
+# Install tools needed for Maven wrapper to download Maven
+RUN apk add --no-cache curl
+
 # Copy Maven wrapper and pom.xml
 COPY mvnw .
 COPY .mvn .mvn
