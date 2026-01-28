@@ -80,7 +80,7 @@ Unit tests are co-located with source files using `.test.ts` suffix in `src/lib/
 
 ### E2E Testing (Playwright)
 
-**Requirements**: Backend repository at `../10xdevs-cards-backend` with a Dockerfile.
+**Requirements**: Backend located at `../backend` (monorepo structure) with a Dockerfile.
 
 - `npm run test:e2e` - Full E2E test suite (starts Docker backend, runs tests, tears down)
 - `npm run test:e2e:run` - Run Playwright tests only (assumes backend is running)
